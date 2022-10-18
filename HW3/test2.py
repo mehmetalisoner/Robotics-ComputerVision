@@ -20,7 +20,6 @@ size = 0
 images = []
 for filename in os.listdir(folder):
     path = os.path.join(folder,filename)                    # create path for image
-    print(path)
     img = cv2.imread(path)                                  # read image
     
     # Downscale image because photos shot on iPhone are too big
@@ -30,25 +29,30 @@ for filename in os.listdir(folder):
     img = cv2.resize(img, (new_width, new_height))          # resize
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)            # convert to gray image
     
-    cv2.imshow('img',gray)
+    #cv2.imshow('img',gray)
     #cv2.waitKey(300)
-    cv2.waitKey(3)
+    #cv2.waitKey(3)
 
     # Find the chess board corners
     ret, corners = cv2.findChessboardCorners(gray, (a,b), None)
-    print(ret,corners)
+    #print(ret,corners)
 
     # If found, add object points, image points (after refining them)
     if ret == True:
         found += 1 
         objpoints.append(objp)
         corners2 = cv2.cornerSubPix(gray,corners, (11,11), (-1,-1), criteria)
+        imgpoints.append(corners2)
         # Draw and display the corners
         cv2.drawChessboardCorners(img, (a,b), corners2, ret)
-        cv2.imshow('img', img)
-        cv2.waitKey(500)
+        #cv2.imshow('img', img)
+        #cv2.waitKey(500)
 
 cv2.destroyAllWindows()
 
+
+ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
         
 print("Number of images used for calibration: ", found)
+
+print(len(tvecs))
