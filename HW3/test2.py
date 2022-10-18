@@ -2,6 +2,8 @@ import numpy as np
 import cv2
 import glob
 import os
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 a = 7
@@ -45,8 +47,8 @@ for filename in os.listdir(folder):
         imgpoints.append(corners2)
         # Draw and display the corners
         cv2.drawChessboardCorners(img, (a,b), corners2, ret)
-        #cv2.imshow('img', img)
-        #cv2.waitKey(500)
+        cv2.imshow('img', img)
+        cv2.waitKey(500)
 
 cv2.destroyAllWindows()
 
@@ -56,3 +58,24 @@ ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.sh
 print("Number of images used for calibration: ", found)
 
 print(len(tvecs))
+
+
+
+fig = plt.figure(figsize=(4,4))
+
+ax = fig.add_subplot(111, projection='3d')
+
+
+for arrs in tvecs:
+    x_coord = arrs[0]
+    y_coord = arrs[1]
+    z_coord = arrs[2]
+    ax.scatter(x_coord,y_coord,z_coord)
+
+
+
+ax.set_xlabel('X Label')
+ax.set_ylabel('Y Label')
+ax.set_zlabel('Z Label')
+
+plt.show()
