@@ -49,7 +49,27 @@ def calculatePW (pl,a,c,q,TwL):
     return PW, PL
 
 
-def stereoRec()
+def stereoRec(pointsFromFirst,pointsFromSecond,sigma_x,sigma_y,sx,sy,focal_length):
+    reconstruced = []
+    # Create necessary matrices
+    TwL = createTwX(T1)         # create T_w^L, for left camera
+    TwR = createTwX(T2)         # create T_w^R, for right camera
+    TrW = np.linalg.inv(TwR)    # invert T_w^R to get T_r^W
+
+    TrL = np.dot(TwL,TrW)       # combine both to get TrL
+    RrL = TrL[0:3,0:3]          # extract RrL
+    trL = TrL[0:3,3]            # extract trL
+    
+    # Get Pixel values for every 2D-point, do the reconstruction
+    for i in range(8):
+        pl_i = pixelTo2D(pointsFromFirst[i],sigma_x,sigma_y,sx,sy,focal_length)
+        pr_i = pixelTo2D(pointsFromSecond[i],sigma_x,sigma_y,sx,sy,focal_length)
+        a,b,c,q = solveRayEqs(pl_i,pr_i,RrL,trL)
+        pw,pl = calculatePW(pl_i,a,c,q,TwL)
+        reconstruced.append(pw)
+
+    return reconstruced
+    
 
 
 # K matrix & its parameters
@@ -103,19 +123,11 @@ pointsFromSecond = []  # store all M2 * points_3D
 MdotPoints(points_3d,M1,pointsFromFirst)
 MdotPoints(points_3d,M2,pointsFromSecond)
 
+reconstruced_points = stereoRec(pointsFromFirst,pointsFromSecond,sigma_x,sigma_y,sx,sy,focal_length)
 
-pl_0 = pixelTo2D(pointsFromFirst[0],sigma_x,sigma_y,sx,sy,focal_length)
-pr_0 = pixelTo2D(pointsFromSecond[0],sigma_x,sigma_y,sx,sy,focal_length)
 
-TwL = createTwX(T1)         # create T_w^L, for left camera
-TwR = createTwX(T2)         # create T_w^R, for right camera
-TrW = np.linalg.inv(TwR)    # invert T_w^R to get T_r^W
+print(reconstruced_points)
 
-TrL = np.dot(TwL,TrW)       # combine both to get TrL
-RrL = TrL[0:3,0:3]          # extract RrL
-trL = TrL[0:3,3]            # extract trL
 
-a,b,c,q = solveRayEqs(pl_0,pr_0,RrL,trL)
-pw,pl = calculatePW(pl_0,a,c,q,TwL)
 
 
