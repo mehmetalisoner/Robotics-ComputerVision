@@ -4,10 +4,9 @@ import numpy as np
 from numpy import linalg
 import scipy as scp
 from scipy.linalg import svd
-
 import matplotlib.pyplot as plt
-
 from matplotlib.lines import Line2D 
+import math
 
 def createCameraMatrix(Rrow1, Rrow2, Rrow3, tvec, Krow1,Krow2,Krow3):
     R_W = np.array([Rrow1,Rrow2,Rrow3])
@@ -24,14 +23,24 @@ def MdotPoints(points,matrix,output):
         temp = np.dot(matrix,point)
         output.append(temp/(temp[2]))
 
-def pixelTo2D(point,sigma_x,sigma_y,sx,sy):
+def pixelTo2D(point,sigma_x,sigma_y,sx,sy,focal_length):
     newx = (point[0]-sigma_x) * (-sx)
-    print(newx)
     newy = (point[1] - sigma_y) * (-sy)
-    return np.array([newx,newy])
+    return np.array([newx,newy,focal_length])
 
 def createTwX(matrix):
     return np.vstack([matrix, [0,0,0,1]])
+
+
+def solveRayEqs(pl,pr,RrL,trL):
+    q = np.cross(pl, np.dot(RrL,pr))
+    lenq = math.sqrt(pow(q[0],2) + pow(q[1],2) + pow(q[2],2))
+    q = q/lenq
+    alpha = np.dot(RrL, pr)
+    mtx = np.array([pl, alpha,q])
+    print(mtx)
+
+
 
 # K matrix & its parameters
 Krow1 = [-100,0,200]
@@ -63,20 +72,6 @@ t2_vec = [-3,-0.5,3]
 M2,K,T2,R2,t2 = createCameraMatrix(R2_row1, R2_row2,R2_row3,t2_vec,Krow1,Krow2,Krow3)
 
 
-# Debugging matrices
-
-# print(M1)
-# print("\n",K)
-# print("\n",T1)
-# print("\n",R1)
-# print("\n",t1)
-
-# print("\n", M2)
-# print("\n",K)
-# print("\n",T2)
-# print("\n",R2)
-# print("\n",t2)
-
 # Creating a cube, defining the points in world-coord.
 p0 = np.array([0,0,0,1])
 p1 = np.array([1,0,0,1])
@@ -99,10 +94,17 @@ MdotPoints(points_3d,M1,pointsFromFirst)
 MdotPoints(points_3d,M2,pointsFromSecond)
 
 
-pl_0 = pixelTo2D(pointsFromFirst[0],sigma_x,sigma_y,sx,sy)
+pl_0 = pixelTo2D(pointsFromFirst[0],sigma_x,sigma_y,sx,sy,focal_length)
+pr_0 = pixelTo2D(pointsFromSecond[0],sigma_x,sigma_y,sx,sy,focal_length)
 
-TwL = createTwX(T1)     # create T_w^L, for left camera
-TwR = createTwX(T2)     # create T_w^R, for right camera
 
-print(TwL)
-print("\n", TwR)
+TwL = createTwX(T1)         # create T_w^L, for left camera
+TwR = createTwX(T2)         # create T_w^R, for right camera
+TrW = np.linalg.inv(TwR)    # invert T_w^R to get T_r^W
+
+
+TrL = np.dot(TwL,TrW)       # combine both to get TrL
+RrL = TrL[0:3,0:3]          # extract RrL
+trL = TrL[0:3,3]            # extract trL
+
+solveRayEqs(pl_0,pr_0,RrL,trL)
