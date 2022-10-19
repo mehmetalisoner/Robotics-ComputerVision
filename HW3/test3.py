@@ -36,11 +36,18 @@ def solveRayEqs(pl,pr,RrL,trL):
     q = np.cross(pl, np.dot(RrL,pr))
     lenq = math.sqrt(pow(q[0],2) + pow(q[1],2) + pow(q[2],2))
     q = q/lenq
-    alpha = np.dot(RrL, pr)
-    mtx = np.array([pl, alpha,q])
-    print(mtx)
+    alpha = - np.dot(RrL, pr)
+    mtx = np.array([pl, alpha,q]).T
+    # s, v, d = np.linalg.svd(mtx)
+    a,b,c = np.linalg.solve(mtx,trL)
+    return a,b,c,q
 
-
+def calculatePW (pl,a,c,q,TwL):
+    PL = a * pl + (c/2) * q
+    PL = np.hstack([PL,[1]]).T
+    print(PL)
+    PW = np.dot(np.linalg.inv(TwL),PL)
+    return PW, PL
 
 # K matrix & its parameters
 Krow1 = [-100,0,200]
@@ -98,6 +105,7 @@ pl_0 = pixelTo2D(pointsFromFirst[0],sigma_x,sigma_y,sx,sy,focal_length)
 pr_0 = pixelTo2D(pointsFromSecond[0],sigma_x,sigma_y,sx,sy,focal_length)
 
 
+
 TwL = createTwX(T1)         # create T_w^L, for left camera
 TwR = createTwX(T2)         # create T_w^R, for right camera
 TrW = np.linalg.inv(TwR)    # invert T_w^R to get T_r^W
@@ -107,4 +115,16 @@ TrL = np.dot(TwL,TrW)       # combine both to get TrL
 RrL = TrL[0:3,0:3]          # extract RrL
 trL = TrL[0:3,3]            # extract trL
 
-solveRayEqs(pl_0,pr_0,RrL,trL)
+# s,v,d = solveRayEqs(pl_0,pr_0,RrL,trL)
+# x = d*(diag(diag(v).^-1)*(s.'*b))
+# print(s)
+# print("\n",v.T)
+# print("\n",d)
+
+a,b,c,q = solveRayEqs(pl_0,pr_0,RrL,trL)
+
+print(a,b,c,q)
+
+pw,pl = calculatePW(pl_0,a,c,q,TwL)
+
+print(pw)
