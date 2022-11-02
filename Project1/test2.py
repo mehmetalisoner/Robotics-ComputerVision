@@ -6,9 +6,20 @@ from torchvision.io import read_image
 from torchvision.models.quantization import resnet50, ResNet50_QuantizedWeights
 import os
 import matplotlib.pyplot as plt
+from torchvision import transforms
+
+# preprocess = transforms.Compose([            
+#  transforms.Resize(256),                    
+#  transforms.CenterCrop(224),                
+#  transforms.ToTensor(),                     
+#  transforms.Normalize(                      
+#  mean=[0.485, 0.456, 0.406],                
+#  std=[0.229, 0.224, 0.225]                  
+# )])
+
 
 folder = "test1"
-filename = "balloon.jpg"
+filename = "balloon1.jpg"
 
 img = read_image(os.path.join(folder,filename))
 plt.imshow(img)
