@@ -21,8 +21,8 @@ from PIL import Image
 
 
 # Init device
-device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-print(f'Using {device} for inference')
+#device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+#print(f'Using {device} for inference')
 
 # Init ResNet and related
 model = models.resnet18(pretrained=False)
@@ -33,7 +33,7 @@ model.conv1 = nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3)
 # Modify number of classes/features, we only got 10 (0,1,2,...9)
 num_features = model.fc.in_features
 model.fc = nn.Linear(num_features,10)
-model = model.to(device)
+#model = model.to(device)
 loss_func = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(),lr=0.001)
 # exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=5, gamma=0.1)
@@ -81,9 +81,25 @@ train_loader = DataLoader(train_data,batch_size=64,shuffle=True)
     
 test_loader = DataLoader(test_data, batch_size=64, shuffle=True)
 
+examples = enumerate(test_loader)
+batch_idx, (example_data, example_targets) = next(examples)
+
+
+
+fig = plt.figure()
+for i in range(6):
+  plt.subplot(2,3,i+1)
+  plt.tight_layout()
+  plt.imshow(example_data[i][0], cmap='gray', interpolation='none')
+  plt.title("Ground Truth: {}".format(example_targets[i]))
+  plt.xticks([])
+  plt.yticks([])
+plt.show()  
+
+
 
 loss_func = nn.CrossEntropyLoss()   
-optimizer = optim.Adam(model.parameters(), lr = 0.01)   
+optimizer = optim.Adam(model.parameters(), lr = 0.001)   
 num_epochs = 2
 
 for epoch in range(num_epochs):
@@ -91,8 +107,8 @@ for epoch in range(num_epochs):
 
     for batch_idx, (data, targets) in enumerate(train_loader):
         # Get data to cuda if possible
-        data = data.to(device=device)
-        targets = targets.to(device=device)
+        # data = data.to(device=device)
+        # targets = targets.to(device=device)
 
         # forward
         scores = model(data)
@@ -109,7 +125,7 @@ for epoch in range(num_epochs):
 
     print(f"Cost at epoch {epoch} is {sum(losses)/len(losses)}")
 
-# Check accuracy on training to see how good our model is
+# Check accuracy on training to see how good our model is, works
 def check_accuracy(loader, model):
     num_correct = 0
     num_samples = 0
@@ -117,8 +133,8 @@ def check_accuracy(loader, model):
 
     with torch.no_grad():
         for x, y in loader:
-            x = x.to(device=device)
-            y = y.to(device=device)
+            # x = x.to(device=device)
+            # y = y.to(device=device)
 
             scores = model(x)
             _, predictions = scores.max(1)
@@ -139,78 +155,16 @@ print("Checking accuracy on Test Set")
 check_accuracy(test_loader, model)
 
 
+with torch.no_grad():
+  output = model(example_data)
 
-
-
-
-
-
-
-
-
-
-# EXTRAS
-
-
-
-# def compute_accuracy(model, data_loader, device):
-#     correct_pred, num_examples = 0, 0
-#     for i, (features, targets) in enumerate(data_loader):
-            
-#         features = features.to(device)
-#         targets = targets.to(device)
-
-#         logits, probas = model(features)
-#         _, predicted_labels = torch.max(probas, 1)
-#         num_examples += targets.size(0)
-#         correct_pred += (predicted_labels == targets).sum()
-#     return correct_pred.float()/num_examples * 100
-    
-
-# start_time = time.time()
-# for epoch in range(NUM_EPOCHS):
-#   model.train()
-#   for batch_idx, (features, targets) in enumerate(train_loader):    
-#     features = features.to(DEVICE)
-#     targets = targets.to(DEVICE)
-        
-#     ### FORWARD AND BACK PROP
-#     logits, probas = model(features)
-#     cost = F.cross_entropy(logits, targets)
-#     optimizer.zero_grad()
-    
-#     cost.backward()
-    
-#     ### UPDATE MODEL PARAMETERS
-#     optimizer.step()
-    
-#     ### LOGGING
-#     if not batch_idx % 50:
-#       print ('Epoch: %03d/%03d | Batch %04d/%04d | Cost: %.4f' 
-#                 %(epoch+1, NUM_EPOCHS, batch_idx, 
-#                 len(train_loader), cost))
-
-#     model.eval()
-#     with torch.set_grad_enabled(False): # save memory during inference
-#       print('Epoch: %03d/%03d | Train: %.3f%%' % (
-#               epoch+1, NUM_EPOCHS, 
-#               compute_accuracy(model, train_loader, device=DEVICE)))
-        
-#     print('Time elapsed: %.2f min' % ((time.time() - start_time)/60))
-    
-# print('Total Training Time: %.2f min' % ((time.time() - start_time)/60))
-
-
-
-
-# predicted=[]
-# with torch.no_grad():
-#     n_correct=0
-#     n_samples=0
-#     for images,labels in test_dataloader:
-#         images=images.reshape(-1,784)
-#         output=Mnist_model(images) #applying the model we have built
-#         labels=labels
-#         _,prediction=torch.max(output,1)
-#         predicted.append(prediction)
-# print(prediction)
+fig = plt.figure()
+for i in range(6):
+  plt.subplot(2,3,i+1)
+  plt.tight_layout()
+  plt.imshow(example_data[i][0], cmap='gray', interpolation='none')
+  plt.title("Prediction: {}".format(
+    output.data.max(1, keepdim=True)[1][i].item()))
+  plt.xticks([])
+  plt.yticks([])
+plt.show()
