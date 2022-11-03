@@ -21,11 +21,11 @@ from PIL import Image
 
 
 # Init device
-#device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-#print(f'Using {device} for inference')
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+print(f'Using {device} for inference')
 
 # Init ResNet and related
-model = models.resnet18(pretrained=False)
+model = models.resnet18(pretrained=True)
 
 # modify convolution layer, input size is (7,7) instead of (28,28)
 model.conv1 = nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
@@ -33,7 +33,7 @@ model.conv1 = nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3)
 # Modify number of classes/features, we only got 10 (0,1,2,...9)
 num_features = model.fc.in_features
 model.fc = nn.Linear(num_features,10)
-#model = model.to(device)
+model = model.to(device)
 loss_func = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(),lr=0.001)
 # exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=5, gamma=0.1)
@@ -107,8 +107,8 @@ for epoch in range(num_epochs):
 
     for batch_idx, (data, targets) in enumerate(train_loader):
         # Get data to cuda if possible
-        # data = data.to(device=device)
-        # targets = targets.to(device=device)
+        data = data.to(device=device)
+        targets = targets.to(device=device)
 
         # forward
         scores = model(data)
@@ -133,8 +133,8 @@ def check_accuracy(loader, model):
 
     with torch.no_grad():
         for x, y in loader:
-            # x = x.to(device=device)
-            # y = y.to(device=device)
+            x = x.to(device=device)
+            y = y.to(device=device)
 
             scores = model(x)
             _, predictions = scores.max(1)
@@ -156,7 +156,8 @@ check_accuracy(test_loader, model)
 
 
 with torch.no_grad():
-  output = model(example_data)
+  example_data_cuda = example_data.to(device=device)  
+  output = model(example_data_cuda)
 
 fig = plt.figure()
 for i in range(6):
