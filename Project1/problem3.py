@@ -50,11 +50,27 @@ print(f'Using {device} for inference')
 
 # Init models
 model = models.resnet50(pretrained=True)
+# Freeze layers
+for param in model.parameters():
+    param.requires_grad = False
+
+# Unfreeze and modify last layer
+for param in model.fc.parameters():
+    param.requires_grad = True
 num_features = model.fc.in_features
 model.fc = nn.Linear(num_features,2)
 model = model.to(device)
 
 model2=models.alexnet(pretrained=True)
+print(model2)
+# Freeze layers
+for param in model2.parameters():
+    param.requires_grad = False
+# Unfreeze last layer and modify
+for param in model2.classifier[4]:
+    param.requires_grad_ = True
+for param in model2.classifier[6]:
+    param.requires_grad_ = True
 model2.classifier[4] = nn.Linear(4096,1024)
 model2.classifier[6] = nn.Linear(1024,2)
 model2 = model2.to(device)
@@ -179,12 +195,12 @@ def eval_example(exp_data):
 def conf_matrix(true,prediction):
     # Build confusion matrix
     classes = ('cats','dogs')
-    cf_matrix = confusion_matrix(true, prediction)
-    df_cm = pd.DataFrame(cf_matrix/np.sum(cf_matrix) *2, index = [i for i in classes],
-                        columns = [i for i in classes])
+    cf_matrix = confusion_matrix(y_true, y_pred)
+    cm = cf_matrix.astype('float') / cf_matrix.sum(axis=1)[:, np.newaxis]
     plt.figure(figsize = (12,7))
-    sn.heatmap(df_cm, annot=True)
+    sn.heatmap(cm, annot=True)
     plt.show()
+
 
     # Print recall, f-score, precision
     print(classification_report(true, prediction))
