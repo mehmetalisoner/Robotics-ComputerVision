@@ -112,8 +112,7 @@ for label,path in noisy_image_path_arr:
 
 
 print("Predicted labels = ", y_pred)
-print("Actual labels = ",y_true)
-
+print("Actual labels = ", y_true)
 
 
 
