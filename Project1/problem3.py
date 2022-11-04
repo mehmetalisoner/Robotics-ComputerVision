@@ -57,10 +57,12 @@ model = model.to(device)
 model2=models.alexnet(pretrained=True)
 model2.classifier[4] = nn.Linear(4096,1024)
 model2.classifier[6] = nn.Linear(1024,2)
+model2 = model2.to(device)
 
 # Define loss, optimizer, num_epochs
 loss_func = nn.CrossEntropyLoss()   
-optimizer = optim.Adam(model.parameters(), lr = 0.001)   
+optimizer = optim.Adam(model.parameters(), lr = 0.001)  
+optimizer2 = optim.Adam(model2.parameters(), lr = 0.001)   
 num_epochs = 3
 
 # Prepare data
@@ -185,9 +187,9 @@ def conf_matrix(true,prediction):
     plt.show()
 
     # Print recall, f-score, precision
-    print(classification_report(y_true, y_pred))
+    print(classification_report(true, prediction))
 
-# Execution of helper functions
+# Execution of ResNet
 plot_example(example_data,example_labels)
 train_model(model=model,num_epochs=num_epochs,loader=train_loader,loss_func=loss_func,optimizer=optimizer)
 
@@ -206,3 +208,25 @@ y_pred, y_true = check_accuracy(test_loader, model)
 # Evaluate example
 eval_example(example_data)
 conf_matrix(y_true,y_pred)
+
+
+
+# Execution of AlexNet
+plot_example(example_data,example_labels)
+train_model(model=model2,num_epochs=num_epochs,loader=train_loader,loss_func=loss_func,optimizer=optimizer2)
+
+# Arrays for output of check_accuracy
+y_pred_2 = []
+y_true_2 = []
+
+
+# Check accuracy of train and test data
+print("Checking accuracy on Training Set")
+check_accuracy(train_loader, model2)
+
+print("Checking accuracy on Test Set")
+y_pred_2, y_true_2 = check_accuracy(test_loader, model2)
+
+# Evaluate example
+eval_example(example_data)
+conf_matrix(y_true_2,y_pred_2)
