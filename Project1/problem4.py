@@ -17,8 +17,10 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 
 
-# Debug variable
+# Debug variables
 DEBUG=0
+DEBUG1=1
+
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 model = torch.hub.load('pytorch/vision:v0.10.0', 'resnet50', pretrained=True)
@@ -82,8 +84,10 @@ for folder in os.listdir(test_folder):
 # Evaluation, iterate through array with paths to noisy images
 for label,path in noisy_image_path_arr:
         noisy_image = Image.open(path)
-        noisy_image.show()
-        print(path)
+        if(DEBUG1):
+            cv2.imshow('Noisy image', cv2.imread(path))
+            cv2.waitKey(2000)
+            cv2.destroyAllWindows()
         input_tensor = preprocess(noisy_image)
         input_batch = input_tensor.unsqueeze(0) # create a mini-batch as expected by the model
         input_batch = input_batch.to('cuda')
@@ -106,27 +110,10 @@ for label,path in noisy_image_path_arr:
 
 
 
-      
 
+print("Predicted labels = ", y_pred)
+print("Actual labels = ",y_true)
 
-
-
-print(y_pred)
-print(y_true)
-
-# # constant for classes
-# classes = ('balloon', 'Labrador retriever', 'barbell','ski', 'velvet')
-
-# # Build confusion matrix
-# cf_matrix = confusion_matrix(y_true, y_pred)
-# df_cm = pd.DataFrame(cf_matrix/np.sum(cf_matrix) *5, index = [i for i in classes],
-#                      columns = [i for i in classes])
-# plt.figure(figsize = (12,7))
-# sn.heatmap(df_cm, annot=True)
-# plt.show()
-
-# # Print recall, f-score, precision
-# print(classification_report(y_true, y_pred))
 
 
 
