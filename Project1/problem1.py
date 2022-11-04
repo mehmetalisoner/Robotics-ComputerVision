@@ -89,9 +89,9 @@ classes = ('balloon', 'Labrador retriever', 'barbell','ski', 'velvet')
 
 # Build confusion matrix
 cf_matrix = confusion_matrix(y_true, y_pred)
-cm = cf_matrix.astype('float') / cf_matrix.sum(axis=1)[:, np.newaxis]
+cmn = cf_matrix.astype('float') / cf_matrix.sum(axis=1)[:, np.newaxis]
 plt.figure(figsize = (12,7))
-sn.heatmap(cm, annot=True)
+sn.heatmap(cmn, annot=True, fmt='.2f', xticklabels=classes, yticklabels=classes)
 plt.show()
 
 print(classification_report(y_true, y_pred))
