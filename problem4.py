@@ -14,6 +14,9 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
+# Debug variable
+DEBUG=0
+
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 model = torch.hub.load('pytorch/vision:v0.10.0', 'resnet50', pretrained=True)
 model = model.to(device)
@@ -27,32 +30,21 @@ preprocess = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 
-# Test with images in folder
+# Folder names
 test_folder = "dataset"
-test_folder = os.path.join(os.getcwd(),test_folder)
-print(test_folder)
+noisy_folder = "noisy_pics"
+project_folder = os.getcwd()
+test_folder = os.path.join(project_folder,test_folder)
+noisy_folder = os.path.join(project_folder,noisy_folder)
+
+# Arrays for predictions and actual values
 y_pred = []
 y_true = []
-mean, sigma = 3, 4 # mean and standard deviation
 
 
-# def add_gaussian_noise(X_imgs):
-#     gaussian_noise_imgs = []
-#     row, col, _ = X_imgs[0].shape
-#     # Gaussian distribution parameters
-#     mean = 0
-#     var = 0.1
-#     sigma = var ** 0.5
-    
-#     for X_img in X_imgs:
-#         gaussian = np.random.random((row, col, 1)).astype(np.float32)
-#         gaussian = np.concatenate((gaussian, gaussian, gaussian), axis = 2)
-#         gaussian_img = cv2.addWeighted(X_img, 0.75, 0.25 * gaussian, 0.25, 0)
-#         gaussian_noise_imgs.append(gaussian_img)
-#     gaussian_noise_imgs = np.array(gaussian_noise_imgs, dtype = np.float32)
-#     return gaussian_noise_imgs
 
 
+# Add noise to dataset and perform evaluation in model
 for folder in os.listdir(test_folder):
     sub_directory = (os.path.join(test_folder,folder))
     if (os.path.isdir(sub_directory) == False): continue
@@ -60,22 +52,27 @@ for folder in os.listdir(test_folder):
     for filename in os.listdir(sub_directory):
         label = folder
         filename_path = os.path.join(sub_directory,filename)
-        print(filename_path)
         original_img = cv2.imread(filename_path)
-        plt.imshow(original_img)
-        plt.show()
+        if(DEBUG): # Show original image if debug
+            cv2.imshow('original',original_img)
+            cv2.waitKey(2)
         
         # Generate Gaussian noise
         gauss = np.random.normal(0,1,original_img.size)
         gauss = gauss.reshape(original_img.shape[0],original_img.shape[1],original_img.shape[2]).astype('uint8')
         # Add the Gaussian noise to the image
         img_gauss = cv2.add(original_img,gauss)
-        # Display the image
-        cv2.imshow('a',img_gauss)
-        cv2.waitKey(0)
+        if (DEBUG): # Show noisy image if debug
+            cv2.imshow('a',img_gauss)
+            cv2.waitKey(2)
+        noisy_image_name = "noisy_"+ filename
+        noisy_image_path = os.path.join(sub_directory,noisy_image_name)
+        cv2.imwrite(noisy_image_name,img_gauss)
 
-        # Actual training
+
+        # Evaluation
         
+        # noisy_image = Image.open(noisy_image_path)
         # input_tensor = preprocess(noisy_image)
         # input_batch = input_tensor.unsqueeze(0) # create a mini-batch as expected by the model
 
@@ -101,6 +98,21 @@ for folder in os.listdir(test_folder):
         # y_pred.append(categories[top5_catid[0]]) # Save Prediction
         # y_true.append(label)
 
+
+cv2.destroyAllWindows()
+
+
+# # Build confusion matrix
+# classes = ('cats','dogs')
+# cf_matrix = confusion_matrix(y_true, y_pred)
+# df_cm = pd.DataFrame(cf_matrix/np.sum(cf_matrix) *2, index = [i for i in classes],
+#                      columns = [i for i in classes])
+# plt.figure(figsize = (12,7))
+# sn.heatmap(df_cm, annot=True)
+# plt.show()
+
+# # Print recall, f-score, precision
+# print(classification_report(y_true, y_pred))
 
 
 
