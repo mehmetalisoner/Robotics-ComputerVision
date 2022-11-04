@@ -1,0 +1,399 @@
+% LaTeX template for DLD Lab - runs with MikTeX and other platforms
+
+\documentclass{article}
+\usepackage{mathptmx}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{latexsym}
+\usepackage{setspace}
+\usepackage{verbatim}
+
+\usepackage[dvipsnames]{xcolor}
+\usepackage{matlab-prettifier}
+
+\numberwithin{equation}{section}
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{dfn}[thm]{Definition}
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{rem}[thm]{Remark}
+\newtheorem{cor}[thm]{Corollary}
+\newtheorem{prop}[thm]{Proposition}
+\newtheorem{asm}[thm]{Assumption}
+\newtheorem{example}[thm]{Example}
+
+\newenvironment{proof}{\noindent {\bf Proof.\/}}{$\qed$\vskip 0.1in}
+\def\qed{ \hfill \vrule width.2cm height.2cm depth0cm\smallskip}
+
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{pythonhighlight}
+
+\definecolor{mGreen}{rgb}{0,0.6,0}
+\definecolor{mGray}{rgb}{0.5,0.5,0.5}
+\definecolor{mPurple}{rgb}{0.58,0,0.82}
+\definecolor{backgroundColour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{CStyle}{
+    backgroundcolor=\color{backgroundColour},   
+    commentstyle=\color{mGreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{mGray},
+    stringstyle=\color{mPurple},
+    basicstyle=\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    language=C
+}
+
+
+
+
+\numberwithin{equation}{section}
+\newcommand{\cA}{\mathcal{A}}
+\newcommand{\cB}{\mathcal{B}}
+\newcommand{\cC}{\mathcal{C}}
+\newcommand{\cD}{\mathcal{D}}
+\newcommand{\cE}{\mathcal{E}}
+\newcommand{\cF}{\mathcal{F}}
+\newcommand{\cG}{\mathcal{G}}
+\newcommand{\cH}{\mathcal{H}}
+\newcommand{\cI}{\mathcal{I}}
+\newcommand{\cJ}{\mathcal{J}}
+\newcommand{\cK}{\mathcal{K}}
+\newcommand{\cL}{\mathcal{L}}
+\newcommand{\cM}{\mathcal{M}}
+\newcommand{\cN}{\mathcal{N}}
+\newcommand{\cO}{\mathcal{O}}
+\newcommand{\cP}{\mathcal{P}}
+\newcommand{\cQ}{\mathcal{Q}}
+\newcommand{\cR}{\mathcal{R}}
+\newcommand{\cS}{\mathcal{S}}
+\newcommand{\cT}{\mathcal{T}}
+\newcommand{\cU}{\mathcal{U}}
+\newcommand{\cV}{\mathcal{V}}
+\newcommand{\cW}{\mathcal{W}}
+\newcommand{\cX}{\mathcal{X}}
+\newcommand{\cY}{\mathcal{Y}}
+\newcommand{\cZ}{\mathcal{Z}}
+%greeks
+\newcommand{\te}{{\theta}}
+\newcommand{\Te}{{\Theta}}
+\newcommand{\vt}{{\vartheta}}
+\newcommand{\Om}{{\Omega}}
+\newcommand{\om}{{\omega}}
+\newcommand{\ups}{{\upsilon}}
+\newcommand{\ve}{{\varepsilon}}
+\newcommand{\del}{{\delta}}
+\newcommand{\Del}{{\Delta}}
+\newcommand{\gam}{{\gamma}}
+\newcommand{\Gam}{{\Gamma}}
+\newcommand{\vf}{{\varphi}}
+\newcommand{\Sig}{{\Sigma}}
+\newcommand{\sig}{{\sigma}}
+\newcommand{\al}{{\alpha}}
+\newcommand{\be}{{\beta}}
+\newcommand{\ka}{{\kappa}}
+\newcommand{\la}{{\lambda}}
+\newcommand{\La}{{\Lambda}}
+
+
+\def \D{\mathbb{D}}
+\def \E{\mathbb{E}}
+\def \F{\mathbb{F}}
+\def \H{\mathbb{H}}
+\def \L{\mathbb{L}}
+\def \M{\mathbb{M}}
+\def \N{\mathbb{N}}
+\def \P{\mathbb{P}}
+\def \Q{\mathbb{Q}}
+\def \R{\mathbb{R}}
+\def \Z{\mathbb{Z}}
+\def \Sb{\mathbb {S}}
+
+\def \om{\omega}
+\def \Om{\Omega}
+\def \ep{\epsilon}
+
+\def\reff#1{{\rm(\ref{#1})}}
+
+\usepackage{times}	   % uncomment to use Times-Roman fonts
+%\usepackage{mathpazo}     % uncomment to use Palatino fonts
+\usepackage{amsmath}	   % enable amsmath features
+\usepackage{graphicx}      % enable inclusion of eps graphs
+\usepackage{cite}          % bibliographical citations
+\usepackage{url}           % typesetting URL's
+\usepackage{color}
+
+% ---------------------------------------------------------------
+
+\setlength{\textwidth}{5.75in}            
+\setlength{\oddsidemargin}{0.375in}   % textwidth + 2*oddsidemargin = 6.5
+\setlength{\evensidemargin}{0.375in}
+\setlength{\topmargin}{-0.5in}
+\setlength{\textheight}{9in}
+
+\def\ce{\begin{center}}            
+\def\cend{\end{center}}
+
+\def\red{\color{red}}
+\def\blue{\color{blue}}
+\def\black{\color{black}}
+
+\begin{document}
+
+\ce
+\red\Large
+RUTGERS UNIVERSITY \\[0.05in]
+School of Engineering \\[0.05in]
+Department of Electrical \& Computer Engineering \\[0.2in]
+\blue ECE 472 -- Robotics \& Computer Vision-- Fall 2022
+\cend
+
+\vspace{1in}
+
+\huge \blue 
+
+\begin{center}
+Project 1 - Deep Learning \& Image Classification
+\end{center}
+
+\vspace{1in}
+
+\Large
+
+Name (last, first) : \ Mehmet Ali Soner 
+
+\vspace{0.3in}
+
+netID : \ mas996
+
+\vspace{0.3in}
+
+RUID:  196000499
+
+\vspace{0.3in}
+
+Date: \today
+
+
+
+
+\vspace{1in}
+
+\color{black} \normalsize
+
+
+\newpage
+
+
+
+
+\section{Problem 1}
+ResNet is a Convolutional Neural Network that incorporated residual learning. If we take the activation function of one layer to be $ \mathcal{F}(x)$ and the input to be $x$, then we would have what a skip connection is called:
+$$
+H(x) = \mathcal{F}(x) + x
+$$ 
+
+We feed the input of one layer into the next one without modifying it all; so it skips one layer and gets added to the next one. This idea was inspired by how the brain functions. The human brain demonstrates a similar phenomenon. The main problem with previous CNN architectures was the inability to train networks that had more depth. It was expected that with more depth, we would achieve higher accuracy but this wasn't the case with traditional CNNs. The figure above shows the higher error rate of the 56-layered network in comparison to the 20-layered network. There are multiple explanations for this but the one that occurs the most is the vanishing/exploding gradients problem. The derivative of the sigmoid function has a maximum value of 0.25. If we have more layers and if we keep on multiplying the partial derivatives of each layer, the gradients will decrease to a value close to zero. This has performance issues since the weights remain unchanged in the network. ResNets overcame that problem through the skip connections and the ReLU function, which doesn't cause a small derivative. With ResNets, we can train deeper networks, which in the end can achieve higher accuracy.
+
+
+
+
+
+\section{Problem 2}
+The first modification that is need is in the first convolutional layer. The MNIST dataset doesn't contain any RGB values and only has one dimension in the third dimension of the image matrix. To clarify, an image you read from the MNIST dataset has shape:
+\begin{python}
+train_data = datasets.MNIST(
+    root = 'data',
+    train = True,                         
+    transform = transforms.ToTensor(), 
+    download = True,            
+)
+print(train_data.data[0].size())
+
+\end{python}
+So, the first convolutional layer is modified accordingly to 
+
+\begin{python}
+model.conv1 = nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+\end{python}
+
+To freeze the layers, we use 
+
+\begin{python}
+# Freeze layers
+
+for param in model.parameters():
+    param.requires_grad = False
+\end{python}
+
+and to unfreeze the last layer, which we want to modify, we use 
+
+
+\begin{python}
+# Unfreeze and modify last layer
+
+for param in model.fc.parameters():
+    param.requires_grad = True
+    
+\end{python}
+
+
+Now, the last layer can be changed so it outputs the amount of classes that is in MNIST, which is 10.
+
+\begin{python}
+# Modify number of classes/features, we only got 10 (0,1,2,...9)
+
+num_features = model.fc.in_features
+model.fc = nn.Linear(num_features,10)
+    
+\end{python}
+
+Finally, I defined some hyperparameters, loss functions and optimizers:
+
+\begin{python}
+batch_size = 32
+loss_func = nn.CrossEntropyLoss()   
+optimizer = optim.Adam(model.parameters(), lr = 0.001)   
+num_epochs = 10
+
+\end{python}
+
+
+
+For the training and evaluation, I have used the same snippet of code for problem 2 and problem 3. For training:
+
+\begin{python}
+def train_model(model,num_epochs,loader,loss_func,optimizer):
+    for epoch in range(num_epochs):
+        losses = []
+
+        for batch_idx, (data, labels) in enumerate(loader):
+            # Get data to cuda if possible
+            data = data.to(device=device)
+            labels = labels.to(device=device)
+
+            # gradient descent or adam step
+            optimizer.step()
+
+            # forward
+            scores = model(data)
+            loss = loss_func(scores, labels)
+
+            losses.append(loss.item())
+
+            # backward
+            optimizer.zero_grad()
+            loss.backward()  
+
+        print(f"Cost at epoch {epoch} is {sum(losses)/len(losses)}")
+    print("Finished training")
+
+\end{python}
+This code was pretty standard and was found in almost every resource that I used, including the tutorial on PyTorch. In this function, the program iterates through the network for num\_ epochs times. Before any operation, the data and the labels are moved to the device. In this case I used a RTX 3090. The three main steps we do in every epoch are going forward, backwards and updating in the network.
+
+
+
+With epochs = 3, the model performed at 89.55\% accuracy on the training set and 89.73\% accuracy on the test set. With epochs = 10, the model performed at 93.33\% accuracy on the training set and 92.21\% accuracy on the test set. 
+
+\section{Problem 3}
+For this problem, I found a dataset which had divided the training set into two folders "cats" and "dogs". This made importing and loading the data a lot easier.
+
+\begin{python}
+# Prepare data
+train_data = ImageFolder(root='dog_cat/training_set',transform=preprocess_res)
+test_data = ImageFolder(root='dog_cat/test_set',transform=preprocess_res)
+
+# DataLoaders
+train_loader = DataLoader(train_data,batch_size=32,shuffle=True)
+test_loader = DataLoader(test_data, batch_size=32, shuffle=True)
+
+\end{python}
+
+For the networks, I chose ResNet50 and AlexNet. The modification for ResNet50 is almost identical to the one in Problem 2. The only differences are the size of the output classes, which in this case is 2 in comparison to 10 from before and the fact that inputs have RGB values.
+
+\begin{python}
+# Init ResNet50
+model = models.resnet50(pretrained=True)
+# Freeze layers
+for param in model.parameters():
+    param.requires_grad = False
+
+# Unfreeze and modify last layer
+for param in model.fc.parameters():
+    param.requires_grad = True
+num_features = model.fc.in_features
+model.fc = nn.Linear(num_features,2)
+model = model.to(device)
+
+\end{python}
+
+The general idea for the modification of AlexNet is the same. Freeze the layers except the last one and modify the output feature size. However, since the architecture of AlexNet is different from ResNet, there are a few extra steps:
+\begin{python}
+# Init AlexNet
+model2=models.alexnet(pretrained=True)
+# Freeze layers
+for param in model2.parameters():
+    param.requires_grad = False
+# Unfreeze last layer and modify
+model2.classifier[4] = nn.Linear(4096,1024)
+model2.classifier[6] = nn.Linear(1024,2)
+model2 = model2.to(device) 
+\end{python}
+
+
+The hyperparameters for this problem were the following:
+
+\begin{python}
+# Define loss, optimizer, num_epochs
+
+loss_func = nn.CrossEntropyLoss()   
+optimizer = optim.Adam(model.parameters(), lr = 0.001)  
+optimizer2 = optim.Adam(model2.parameters(), lr = 0.001)   
+num_epochs = 3
+
+\end{python}
+
+
+With ResNet50, the model performed at 98.71\% accuracy on the training set and 98.02\% accuracy on the test set. With AlexNet, the model performed at 98.35\% accuracy on the training set and 98.35\% accuracy on the test set.
+
+
+
+
+
+
+
+\begin{comment}
+\begin{figure}
+	\centering
+	\hspace*{-3.0cm}
+	\includegraphics[scale=0.0001]{Q4.2M.png}
+	\\	
+	\textbf{Fig.7:} Comparator for 3-bit signed integers, $a=-2=[1,1,0]$
+	\\
+	\label{fig:Fig.7}
+\end{figure}
+\end{comment}
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}
