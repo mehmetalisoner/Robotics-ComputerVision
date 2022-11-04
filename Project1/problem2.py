@@ -23,6 +23,8 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 import seaborn as sn
 
+DEBUG=0
+
 
 # Init device
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -65,22 +67,25 @@ plt.title('%i' % train_data.targets[0])
 plt.show()
 
 
-# # Plot multiple data objects from MNIST
-# figure = plt.figure(figsize=(10, 8))
-# cols, rows = 5, 5
-# for i in range(1, cols * rows + 1):
-#     sample_idx = torch.randint(len(train_data), size=(1,)).item()
-#     img, label = train_data[sample_idx]
-#     figure.add_subplot(rows, cols, i)
-#     plt.title(label)
-#     plt.axis("off")
-#     plt.imshow(img.squeeze(), cmap="gray")
-# plt.show()
+# Plot multiple data objects from MNIST
+if (DEBUG == 1):
+    figure = plt.figure(figsize=(10, 8))
+    cols, rows = 5, 5
+    for i in range(1, cols * rows + 1):
+        sample_idx = torch.randint(len(train_data), size=(1,)).item()
+        img, label = train_data[sample_idx]
+        figure.add_subplot(rows, cols, i)
+        plt.title(label)
+        plt.axis("off")
+        plt.imshow(img.squeeze(), cmap="gray")
+    plt.show()
+
 
 # prepare loaders for training and testing
 train_loader = DataLoader(train_data,batch_size=64,shuffle=True)
 test_loader = DataLoader(test_data, batch_size=64, shuffle=True)
 
+# Get example batches
 examples = enumerate(test_loader)
 batch_idx, (example_data, example_labels) = next(examples)
 
@@ -108,7 +113,7 @@ def train_model(model,num_epochs,loader,loss_func,optimizer):
     for epoch in range(num_epochs):
         losses = []
 
-        for batch_idx, (data, labels) in enumerate(train_loader):
+        for batch_idx, (data, labels) in enumerate(loader):
             # Get data to cuda if possible
             data = data.to(device=device)
             labels = labels.to(device=device)
@@ -185,6 +190,7 @@ with torch.no_grad():
   example_data_cuda = example_data.to(device=device)  
   output = model(example_data_cuda)
 
+# Plot output for example data
 fig = plt.figure()
 for i in range(6):
   plt.subplot(2,3,i+1)
