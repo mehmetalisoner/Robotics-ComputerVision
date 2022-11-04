@@ -35,10 +35,12 @@ preprocess = transforms.Compose([
 
 # Folder names
 test_folder = "dataset"
-noisy_folder = "noisy_pics"
+noisy_folder = "noisy_folder"
 project_folder = os.getcwd()
 test_folder = os.path.join(project_folder,test_folder)
 noisy_folder = os.path.join(project_folder,noisy_folder)
+noisy_image_path_arr = []
+print(noisy_folder)
 
 # Arrays for predictions and actual values
 y_pred = []
@@ -51,7 +53,6 @@ y_true = []
 for folder in os.listdir(test_folder):
     sub_directory = (os.path.join(test_folder,folder))
     if (os.path.isdir(sub_directory) == False): continue
-    print(sub_directory)
     for filename in os.listdir(sub_directory):
         label = folder
         filename_path = os.path.join(sub_directory,filename)
@@ -72,47 +73,46 @@ for folder in os.listdir(test_folder):
             cv2.destroyAllWindows()
         noisy_image_name = "noisy_"+ filename
         noisy_image_path = os.path.join(noisy_folder,noisy_image_name)
-        cv2.imwrite(noisy_image_name,img_gauss)
+        noisy_image_path_arr.append([label,noisy_image_path])
+        cv2.imwrite(noisy_image_path,img_gauss)
+
+
 
         
+# Evaluation, iterate through array with paths to noisy images
+for label,path in noisy_image_path_arr:
+        noisy_image = Image.open(path)
+        noisy_image.show()
+        print(path)
+        input_tensor = preprocess(noisy_image)
+        input_batch = input_tensor.unsqueeze(0) # create a mini-batch as expected by the model
+        input_batch = input_batch.to('cuda')
 
-
-
-# # Evaluation
+        with torch.no_grad():
+            output = model(input_batch)
         
+        probabilities = torch.nn.functional.softmax(output[0], dim=0)
+
+        # Read the categories
+        with open("imagenet_classes.txt", "r") as f:
+            categories = [s.strip() for s in f.readlines()]
+        # Show top categories per image
+        top5_prob, top5_catid = torch.topk(probabilities, 5)
+        for i in range(top5_prob.size(0)):
+            print(categories[top5_catid[i]], top5_prob[i].item())
+        print("\n")
+        y_pred.append(categories[top5_catid[0]]) # Save Prediction
+        y_true.append(label)
+
+
+
       
-#         input_tensor = preprocess(noisy_image)
-#         input_batch = input_tensor.unsqueeze(0) # create a mini-batch as expected by the model
-
-#         # move the input and model to GPU for speed if available
-#         if torch.cuda.is_available():
-#             input_batch = input_batch.to('cuda')
-#             model.to('cuda')
-
-#         with torch.no_grad():
-#             output = model(input_batch)
-        
-#         probabilities = torch.nn.functional.softmax(output[0], dim=0)
-
-
-#         # Read the categories
-#         with open("imagenet_classes.txt", "r") as f:
-#             categories = [s.strip() for s in f.readlines()]
-#         # Show top categories per image
-#         top5_prob, top5_catid = torch.topk(probabilities, 5)
-#         for i in range(top5_prob.size(0)):
-#             cv2.imshow('Noisy input image', img_gauss)
-#             print(categories[top5_catid[i]], top5_prob[i].item())
-#         print("\n")
-#         y_pred.append(categories[top5_catid[0]]) # Save Prediction
-#         y_true.append(label)
 
 
 
 
-
-# print(y_pred)
-# print(y_true)
+print(y_pred)
+print(y_true)
 
 # # constant for classes
 # classes = ('balloon', 'Labrador retriever', 'barbell','ski', 'velvet')
