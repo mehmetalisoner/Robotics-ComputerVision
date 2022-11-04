@@ -40,7 +40,6 @@ for param in model.parameters():
 for param in model.fc.parameters():
     param.requires_grad = True
 
-
 # modify convolution layer, input size is (7,7) instead of (28,28)
 model.conv1 = nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
 
@@ -90,8 +89,8 @@ if (DEBUG == 1):
 
 
 # prepare loaders for training and testing
-train_loader = DataLoader(train_data,batch_size=64,shuffle=True)
-test_loader = DataLoader(test_data, batch_size=64, shuffle=True)
+train_loader = DataLoader(train_data,batch_size=32,shuffle=True)
+test_loader = DataLoader(test_data, batch_size=32, shuffle=True)
 
 # Get example batches
 examples = enumerate(test_loader)
@@ -113,7 +112,7 @@ plt.show()
 # Define loss, optimizer, num_epochs
 loss_func = nn.CrossEntropyLoss()   
 optimizer = optim.Adam(model.parameters(), lr = 0.001)   
-num_epochs = 3
+num_epochs = 10
 
 
 # Train model
@@ -214,9 +213,9 @@ plt.show()
 # Build confusion matrix
 classes = ('0','1','2','3','4','5','6','7','8','9')
 cf_matrix = confusion_matrix(y_true, y_pred)
-cm = cf_matrix.astype('float') / cf_matrix.sum(axis=1)[:, np.newaxis]
+cmn = cf_matrix.astype('float') / cf_matrix.sum(axis=1)[:, np.newaxis]
 plt.figure(figsize = (12,7))
-sn.heatmap(cm, annot=True)
+sn.heatmap(cmn, annot=True, fmt='.2f', xticklabels=classes, yticklabels=classes)
 plt.show()
 
 # Print recall, f-score, precision
