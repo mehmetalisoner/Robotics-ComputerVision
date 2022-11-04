@@ -7,6 +7,8 @@ import os
 from PIL import Image
 from torchvision import transforms
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import classification_report
+
 import seaborn as sn
 import pandas as pd
 import urllib
@@ -92,3 +94,4 @@ df_cm = pd.DataFrame(cf_matrix/np.sum(cf_matrix) *5, index = [i for i in classes
 plt.figure(figsize = (12,7))
 sn.heatmap(df_cm, annot=True)
 plt.show()
+print(classification_report(y_true, y_pred))
