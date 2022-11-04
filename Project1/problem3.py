@@ -67,13 +67,7 @@ num_epochs = 3
 train_data = ImageFolder(root='dog_cat/training_set',transform=preprocess_res)
 test_data = ImageFolder(root='dog_cat/test_set',transform=preprocess_res)
 
-
-
-
-print(train_data.classes)
-
-
-
+# DataLoaders
 train_loader = DataLoader(train_data,batch_size=32,shuffle=True)
 test_loader = DataLoader(test_data, batch_size=32, shuffle=True)
 
@@ -81,20 +75,26 @@ test_loader = DataLoader(test_data, batch_size=32, shuffle=True)
 examples = enumerate(test_loader)
 batch_idx, (example_data, example_labels) = next(examples)
 
+print(train_data.classes)
 
+
+
+# Helper functions
+
+# Plot example data
+def plot_example(data,labels):
 # Plot the example data set
-fig = plt.figure()
-for i in range(6):
-  plt.subplot(2,3,i+1)
-  plt.tight_layout()
-  img = example_data[i][0]
-  # img.thumbnail((256,256), Image.ANTIALIAS)
-  plt.imshow(img, interpolation='none')
-  plt.title("Ground Truth: {}".format(example_labels[i]))
-  plt.xticks([])
-  plt.yticks([])
-plt.show()  
-
+    fig = plt.figure()
+    for i in range(6):
+        plt.subplot(2,3,i+1)
+        plt.tight_layout()
+        img = data[i][0]
+        # img.thumbnail((256,256), Image.ANTIALIAS)
+        plt.imshow(img, cmap='gray',interpolation='none')
+        plt.title("Ground Truth: {}".format(labels[i]))
+        plt.xticks([])
+        plt.yticks([])
+    plt.show()  
 
 # Train model
 def train_model(model,num_epochs,loader,loss_func,optimizer):
@@ -154,6 +154,41 @@ def check_accuracy(loader, model):
     model.train()
     return predicted, actual
 
+# Evaluate on one example from testset
+def eval_example(exp_data):
+    # Get classification for example data
+    with torch.no_grad():
+        exp_data_cuda = exp_data.to(device=device)  
+        output = model(exp_data_cuda)
+
+    # Plot output for example data
+    fig = plt.figure()
+    for i in range(6):
+        plt.subplot(2,3,i+1)
+        plt.tight_layout()
+        plt.imshow(example_data[i][0], cmap='gray', interpolation='none')
+        plt.title("Prediction: {}".format(
+            output.data.max(1, keepdim=True)[1][i].item()))
+        plt.xticks([])
+        plt.yticks([])
+    plt.show()
+
+# Build confusion matrix
+def conf_matrix(true,prediction):
+    # Build confusion matrix
+    classes = ('cats','dogs')
+    cf_matrix = confusion_matrix(true, prediction)
+    df_cm = pd.DataFrame(cf_matrix/np.sum(cf_matrix) *2, index = [i for i in classes],
+                        columns = [i for i in classes])
+    plt.figure(figsize = (12,7))
+    sn.heatmap(df_cm, annot=True)
+    plt.show()
+
+    # Print recall, f-score, precision
+    print(classification_report(y_true, y_pred))
+
+# Execution of helper functions
+plot_example(example_data,example_labels)
 train_model(model=model,num_epochs=num_epochs,loader=train_loader,loss_func=loss_func,optimizer=optimizer)
 
 # Arrays for output of check_accuracy
@@ -168,34 +203,6 @@ check_accuracy(train_loader, model)
 print("Checking accuracy on Test Set")
 y_pred, y_true = check_accuracy(test_loader, model)
 
-
-
-# Get classification for example data
-with torch.no_grad():
-  example_data_cuda = example_data.to(device=device)  
-  output = model(example_data_cuda)
-
-# Plot output for example data
-fig = plt.figure()
-for i in range(6):
-  plt.subplot(2,3,i+1)
-  plt.tight_layout()
-  plt.imshow(example_data[i][0], cmap='gray', interpolation='none')
-  plt.title("Prediction: {}".format(
-    output.data.max(1, keepdim=True)[1][i].item()))
-  plt.xticks([])
-  plt.yticks([])
-plt.show()
-
-
-# Build confusion matrix
-classes = ('cats','dogs')
-cf_matrix = confusion_matrix(y_true, y_pred)
-df_cm = pd.DataFrame(cf_matrix/np.sum(cf_matrix) *2, index = [i for i in classes],
-                     columns = [i for i in classes])
-plt.figure(figsize = (12,7))
-sn.heatmap(df_cm, annot=True)
-plt.show()
-
-# Print recall, f-score, precision
-print(classification_report(y_true, y_pred))
+# Evaluate example
+eval_example(example_data)
+conf_matrix(y_true,y_pred)
