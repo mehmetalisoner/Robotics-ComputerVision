@@ -7,12 +7,15 @@ import os
 from PIL import Image
 from torchvision import transforms
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import classification_report
 import seaborn as sn
 import pandas as pd
 import urllib
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+from matplotlib import cm
+
 
 # Debug variable
 DEBUG=0
@@ -55,58 +58,68 @@ for folder in os.listdir(test_folder):
         original_img = cv2.imread(filename_path)
         if(DEBUG): # Show original image if debug
             cv2.imshow('original',original_img)
-            cv2.waitKey(2000)
+            cv2.waitKey(500)
         
         # Generate Gaussian noise
         gauss = np.random.normal(0,1,original_img.size)
         gauss = gauss.reshape(original_img.shape[0],original_img.shape[1],original_img.shape[2]).astype('uint8')
         # Add the Gaussian noise to the image
         img_gauss = cv2.add(original_img,gauss)
+        
         if (DEBUG): # Show noisy image if debug
             cv2.imshow('a',img_gauss)
-            cv2.waitKey(2000)
+            cv2.waitKey(500)
             cv2.destroyAllWindows()
         noisy_image_name = "noisy_"+ filename
-        noisy_image_path = os.path.join(sub_directory,noisy_image_name)
+        noisy_image_path = os.path.join(noisy_folder,noisy_image_name)
         cv2.imwrite(noisy_image_name,img_gauss)
 
-
-        # Evaluation
         
-        # noisy_image = Image.open(noisy_image_path)
-        # input_tensor = preprocess(noisy_image)
-        # input_batch = input_tensor.unsqueeze(0) # create a mini-batch as expected by the model
 
-        # # move the input and model to GPU for speed if available
-        # if torch.cuda.is_available():
-        #     input_batch = input_batch.to('cuda')
-        #     model.to('cuda')
 
-        # with torch.no_grad():
-        #     output = model(input_batch)
+
+# # Evaluation
         
-        # probabilities = torch.nn.functional.softmax(output[0], dim=0)
+      
+#         input_tensor = preprocess(noisy_image)
+#         input_batch = input_tensor.unsqueeze(0) # create a mini-batch as expected by the model
+
+#         # move the input and model to GPU for speed if available
+#         if torch.cuda.is_available():
+#             input_batch = input_batch.to('cuda')
+#             model.to('cuda')
+
+#         with torch.no_grad():
+#             output = model(input_batch)
+        
+#         probabilities = torch.nn.functional.softmax(output[0], dim=0)
 
 
-        # # Read the categories
-        # with open("imagenet_classes.txt", "r") as f:
-        #     categories = [s.strip() for s in f.readlines()]
-        # # Show top categories per image
-        # top5_prob, top5_catid = torch.topk(probabilities, 5)
-        # for i in range(top5_prob.size(0)):
-        #     cv2.imshow('Noisy input image', img_gauss)
-        #     print(categories[top5_catid[i]], top5_prob[i].item())
-        # print("New item:")
-        # y_pred.append(categories[top5_catid[0]]) # Save Prediction
-        # y_true.append(label)
+#         # Read the categories
+#         with open("imagenet_classes.txt", "r") as f:
+#             categories = [s.strip() for s in f.readlines()]
+#         # Show top categories per image
+#         top5_prob, top5_catid = torch.topk(probabilities, 5)
+#         for i in range(top5_prob.size(0)):
+#             cv2.imshow('Noisy input image', img_gauss)
+#             print(categories[top5_catid[i]], top5_prob[i].item())
+#         print("\n")
+#         y_pred.append(categories[top5_catid[0]]) # Save Prediction
+#         y_true.append(label)
 
 
 
+
+
+# print(y_pred)
+# print(y_true)
+
+# # constant for classes
+# classes = ('balloon', 'Labrador retriever', 'barbell','ski', 'velvet')
 
 # # Build confusion matrix
-# classes = ('cats','dogs')
 # cf_matrix = confusion_matrix(y_true, y_pred)
-# df_cm = pd.DataFrame(cf_matrix/np.sum(cf_matrix) *2, index = [i for i in classes],
+# df_cm = pd.DataFrame(cf_matrix/np.sum(cf_matrix) *5, index = [i for i in classes],
 #                      columns = [i for i in classes])
 # plt.figure(figsize = (12,7))
 # sn.heatmap(df_cm, annot=True)
