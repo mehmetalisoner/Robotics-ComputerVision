@@ -32,6 +32,14 @@ print(f'Using {device} for inference')
 
 # Init ResNet and related
 model = models.resnet18(pretrained=True)
+# Freeze layers
+for param in model.parameters():
+    param.requires_grad = False
+
+# Unfreeze and modify last layer
+for param in model.fc.parameters():
+    param.requires_grad = True
+
 
 # modify convolution layer, input size is (7,7) instead of (28,28)
 model.conv1 = nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
@@ -206,10 +214,9 @@ plt.show()
 # Build confusion matrix
 classes = ('0','1','2','3','4','5','6','7','8','9')
 cf_matrix = confusion_matrix(y_true, y_pred)
-df_cm = pd.DataFrame(cf_matrix/np.sum(cf_matrix) *10, index = [i for i in classes],
-                     columns = [i for i in classes])
+cm = cf_matrix.astype('float') / cf_matrix.sum(axis=1)[:, np.newaxis]
 plt.figure(figsize = (12,7))
-sn.heatmap(df_cm, annot=True)
+sn.heatmap(cm, annot=True)
 plt.show()
 
 # Print recall, f-score, precision
