@@ -55,7 +55,7 @@ for folder in os.listdir(test_folder):
         original_img = cv2.imread(filename_path)
         if(DEBUG): # Show original image if debug
             cv2.imshow('original',original_img)
-            cv2.waitKey(2)
+            cv2.waitKey(2000)
         
         # Generate Gaussian noise
         gauss = np.random.normal(0,1,original_img.size)
@@ -64,7 +64,8 @@ for folder in os.listdir(test_folder):
         img_gauss = cv2.add(original_img,gauss)
         if (DEBUG): # Show noisy image if debug
             cv2.imshow('a',img_gauss)
-            cv2.waitKey(2)
+            cv2.waitKey(2000)
+            cv2.destroyAllWindows()
         noisy_image_name = "noisy_"+ filename
         noisy_image_path = os.path.join(sub_directory,noisy_image_name)
         cv2.imwrite(noisy_image_name,img_gauss)
@@ -93,13 +94,13 @@ for folder in os.listdir(test_folder):
         # # Show top categories per image
         # top5_prob, top5_catid = torch.topk(probabilities, 5)
         # for i in range(top5_prob.size(0)):
+        #     cv2.imshow('Noisy input image', img_gauss)
         #     print(categories[top5_catid[i]], top5_prob[i].item())
         # print("New item:")
         # y_pred.append(categories[top5_catid[0]]) # Save Prediction
         # y_true.append(label)
 
 
-cv2.destroyAllWindows()
 
 
 # # Build confusion matrix
