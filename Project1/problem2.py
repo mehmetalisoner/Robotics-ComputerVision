@@ -22,7 +22,6 @@ from PIL import Image
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 import seaborn as sn
-import pandas as pd
 
 
 # Init device
@@ -39,11 +38,10 @@ model.conv1 = nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3)
 num_features = model.fc.in_features
 model.fc = nn.Linear(num_features,10)
 model = model.to(device)
-# exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=5, gamma=0.1)
 
 
 
-# Init data and data_loaders
+# Initialize data
 train_data = datasets.MNIST(
     root = 'data',
     train = True,                         
@@ -57,7 +55,7 @@ test_data = datasets.MNIST(
 )
 
 
-
+# Get train data size
 print(train_data)
 print(train_data.data.size())
 
@@ -79,7 +77,7 @@ plt.show()
 #     plt.imshow(img.squeeze(), cmap="gray")
 # plt.show()
 
-
+# prepare loaders for training and testing
 train_loader = DataLoader(train_data,batch_size=64,shuffle=True)
 test_loader = DataLoader(test_data, batch_size=64, shuffle=True)
 
@@ -104,34 +102,40 @@ loss_func = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr = 0.001)   
 num_epochs = 3
 
-for epoch in range(num_epochs):
-    losses = []
 
-    for batch_idx, (data, labels) in enumerate(train_loader):
-        # Get data to cuda if possible
-        data = data.to(device=device)
-        labels = labels.to(device=device)
+# Train model
+def train_model(model,num_epochs,loader,loss_func,optimizer):
+    for epoch in range(num_epochs):
+        losses = []
 
-        # gradient descent or adam step
-        optimizer.step()
+        for batch_idx, (data, labels) in enumerate(train_loader):
+            # Get data to cuda if possible
+            data = data.to(device=device)
+            labels = labels.to(device=device)
 
-        # forward
-        scores = model(data)
-        loss = loss_func(scores, labels)
+            # gradient descent or adam step
+            optimizer.step()
 
-        losses.append(loss.item())
+            # forward
+            scores = model(data)
+            loss = loss_func(scores, labels)
 
-        # backward
-        optimizer.zero_grad()
-        loss.backward()  
+            losses.append(loss.item())
 
-    print(f"Cost at epoch {epoch} is {sum(losses)/len(losses)}")
+            # backward
+            optimizer.zero_grad()
+            loss.backward()  
 
-# Check accuracy on training to see how good our model is, works
+        print(f"Cost at epoch {epoch} is {sum(losses)/len(losses)}")
+    print("Finished training")
+
+# Calculate accuracy of model
 def check_accuracy(loader, model):
+    # Arrays for confusion matrix
     predicted = []
     actual = []
     
+    # Keep track of correct output
     num_correct = 0
     num_samples = 0
     
@@ -139,6 +143,7 @@ def check_accuracy(loader, model):
 
     with torch.no_grad():
         for images, labels in loader:
+            # Load data to cuda if possible
             images = images.to(device=device)
             labels = labels.to(device=device)
 
@@ -146,9 +151,9 @@ def check_accuracy(loader, model):
             _, predictions = scores.max(1)
             num_correct += (predictions == labels).sum()
             num_samples += predictions.size(0)
-            temp = (torch.max(torch.exp(scores), 1)[1]).data.cpu().numpy()
-            predicted.extend(temp)
-            actual.extend(labels.data.cpu().numpy())
+            temp = (torch.max(torch.exp(scores), 1)[1]).data.cpu().numpy() # for confusion matrix
+            predicted.extend(temp) # for confusion matrix
+            actual.extend(labels.data.cpu().numpy()) # for confusion matrix
         print(
             f"Got {num_correct} / {num_samples} with accuracy {float(num_correct)/float(num_samples)*100:.2f}"
         )
@@ -157,10 +162,16 @@ def check_accuracy(loader, model):
     return predicted, actual
 
 
+# Call functions and perform
+train_model(model=model,num_epochs=num_epochs,loader=train_loader,loss_func=loss_func,optimizer=optimizer)
+
+
+# Arrays for output of check_accuracy
 y_pred = []
 y_true = []
 
 
+# Check accuracy of train and test data
 print("Checking accuracy on Training Set")
 check_accuracy(train_loader, model)
 
@@ -169,7 +180,7 @@ y_pred, y_true = check_accuracy(test_loader, model)
 
 
 
-
+# Get classification for example data
 with torch.no_grad():
   example_data_cuda = example_data.to(device=device)  
   output = model(example_data_cuda)
@@ -186,14 +197,8 @@ for i in range(6):
 plt.show()
 
 
-
-
-# print(y_pred)
-# print(y_true)
-
-classes = ('0','1','2','3','4','5','6','7','8','9')
-
 # Build confusion matrix
+classes = ('0','1','2','3','4','5','6','7','8','9')
 cf_matrix = confusion_matrix(y_true, y_pred)
 df_cm = pd.DataFrame(cf_matrix/np.sum(cf_matrix) *10, index = [i for i in classes],
                      columns = [i for i in classes])
@@ -201,6 +206,5 @@ plt.figure(figsize = (12,7))
 sn.heatmap(df_cm, annot=True)
 plt.show()
 
-
-
+# Print recall, f-score, precision
 print(classification_report(y_true, y_pred))
