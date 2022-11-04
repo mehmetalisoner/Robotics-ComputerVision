@@ -198,9 +198,8 @@ def conf_matrix(true,prediction):
     cf_matrix = confusion_matrix(y_true, y_pred)
     cm = cf_matrix.astype('float') / cf_matrix.sum(axis=1)[:, np.newaxis]
     plt.figure(figsize = (12,7))
-    sn.heatmap(cm, annot=True)
+    sn.heatmap(cm, annot=True, fmt='.2f', xticklabels=classes, yticklabels=classes)
     plt.show()
-
 
     # Print recall, f-score, precision
     print(classification_report(true, prediction))
