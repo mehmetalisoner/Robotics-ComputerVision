@@ -29,6 +29,8 @@ preprocess = transforms.Compose([
 
 # Test with images in folder
 test_folder = "dataset"
+test_folder = os.path.join(os.getcwd(),test_folder)
+print(test_folder)
 y_pred = []
 y_true = []
 mean, sigma = 3, 4 # mean and standard deviation
@@ -53,21 +55,26 @@ mean, sigma = 3, 4 # mean and standard deviation
 
 for folder in os.listdir(test_folder):
     sub_directory = (os.path.join(test_folder,folder))
-    print(folder)
+    if (os.path.isdir(sub_directory) == False): continue
+    print(sub_directory)
     for filename in os.listdir(sub_directory):
         label = folder
-        filename = os.path.join(sub_directory,filename)
-        print(filename)
-        original_img = np.array(Image.open(filename))
-        print(original_img)
+        filename_path = os.path.join(sub_directory,filename)
+        print(filename_path)
+        original_img = cv2.imread(filename_path)
         plt.imshow(original_img)
         plt.show()
         
-        gaussian = np.random.normal(mean, sigma, (original_img.shape[0],original_img.shape[1],original_img.shape[2])) 
-        noisy_image = gaussian + original_img
-        print(noisy_image)
-        img = Image.fromarray(noisy_image, 'RGB')
-        img.show()
+        # Generate Gaussian noise
+        gauss = np.random.normal(0,1,original_img.size)
+        gauss = gauss.reshape(original_img.shape[0],original_img.shape[1],original_img.shape[2]).astype('uint8')
+        # Add the Gaussian noise to the image
+        img_gauss = cv2.add(original_img,gauss)
+        # Display the image
+        cv2.imshow('a',img_gauss)
+        cv2.waitKey(0)
+
+        # Actual training
         
         # input_tensor = preprocess(noisy_image)
         # input_batch = input_tensor.unsqueeze(0) # create a mini-batch as expected by the model
