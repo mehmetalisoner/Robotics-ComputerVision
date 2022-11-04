@@ -62,15 +62,10 @@ model.fc = nn.Linear(num_features,2)
 model = model.to(device)
 
 model2=models.alexnet(pretrained=True)
-print(model2)
 # Freeze layers
 for param in model2.parameters():
     param.requires_grad = False
 # Unfreeze last layer and modify
-for param in model2.classifier[4]:
-    param.requires_grad_ = True
-for param in model2.classifier[6]:
-    param.requires_grad_ = True
 model2.classifier[4] = nn.Linear(4096,1024)
 model2.classifier[6] = nn.Linear(1024,2)
 model2 = model2.to(device)
