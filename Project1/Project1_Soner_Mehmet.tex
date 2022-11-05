@@ -273,7 +273,9 @@ num_epochs = 10
 For the training and evaluation, I have used the same snippet of code for problem 2 and problem 3. For training:
 
 \begin{python}
+# Train model
 def train_model(model,num_epochs,loader,loss_func,optimizer):
+    model.train()
     for epoch in range(num_epochs):
         losses = []
 
@@ -281,19 +283,20 @@ def train_model(model,num_epochs,loader,loss_func,optimizer):
             # Get data to cuda if possible
             data = data.to(device=device)
             labels = labels.to(device=device)
-
-            # gradient descent or adam step
-            optimizer.step()
+            
+            # zero gradients
+            optimizer.zero_grad()
 
             # forward
             scores = model(data)
+            
+            # calcualte loss + backpropagation
             loss = loss_func(scores, labels)
-
             losses.append(loss.item())
-
-            # backward
-            optimizer.zero_grad()
-            loss.backward()  
+            loss.backward()
+            
+            # adjust learning weights
+            optimizer.step()
 
         print(f"Cost at epoch {epoch} is {sum(losses)/len(losses)}")
     print("Finished training")
