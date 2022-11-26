@@ -201,55 +201,47 @@ Date: \today
 Cart Pole code assignment, code + explanation
 
 
-
-
-\textbf{Important:} For google colab and displaying videos, use code below:
+I have structured the code into two main parts: a part before and after training. The part before training is mainly to test out components such as the video capturing of an episode, the overall environment and the functions built within. First we call the following terminal commands:
 
 \begin{python}
-# install dependencies needed for recording videos
+!apt-get update
 !apt-get install -y xvfb x11-utils
-!pip install pyvirtualdisplay==0.2.*
+%pip install pyvirtualdisplay==0.2.*
+%pip install gym[classic_control]
+\end{python}
 
+I am calling apt-get update since I ran into issues with xvfb couple of times and this seem to resolve it. We install xvfb and pyvirtualdisplay for the video capturing. Then we import the gym package and create the environment for "CartPole":
 
-from pyvirtualdisplay import Display
-display = Display(visible=False, size=(1400, 900))
-_ = display.start()
+\begin{python}
+# Prepare environment, we will first demonstrate a video withouth any training
 
-from gym.wrappers.monitoring.video_recorder import VideoRecorder
-before_training = "before_training.mp4"
+import gym
 
-video = VideoRecorder(env, before_training)
-# returns an initial observation
-env.reset()
-for i in range(200):
-  env.render()
-  video.capture_frame()
-  # env.action_space.sample() produces either 0 (left) or 1 (right).
-  observation, reward, done, info = env.step(env.action_space.sample())
-  # Not printing this time
-  #print("step", i, observation, reward, done, info)
-
-video.close()
-env.close()
-
-
-from base64 import b64encode
-def render_mp4(videopath: str) -> str:
-  """
-  Gets a string containing a b4-encoded version of the MP4 video
-  at the specified path.
-  """
-  mp4 = open(videopath, 'rb').read()
-  base64_encoded_mp4 = b64encode(mp4).decode()
-  return f'<video width=400 controls><source src="data:video/mp4;' \
-         f'base64,{base64_encoded_mp4}" type="video/mp4"></video>'
-         
-         
-from IPython.display import HTML
-html = render_mp4(before_training)
-HTML(html)
+if gym.__version__ < '0.26':
+    env = gym.make('CartPole-v0', new_step_api=True, render_mode='single_rgb_array').unwrapped
+else:
+    env = gym.make('CartPole-v0', render_mode='rgb_array').unwrapped
 
 \end{python}
+
+After this, I will skip few things such as the video capturing and importing other various packages. I want to focus on the DQN's linear layer. In this model, we have to have two possible outputs in our final/linear layer since we will either push the cart to the right or to the left. In order to add this layer, we have to know the output size of each convolutional layer so that we have the right input size for the linear layer. That's why we call conv2d\_size\_out three times since we have three convolutional layers. We then calculate the input size and add it with: 
+
+\begin{python}
+linear_input_size = convw * convh * 32
+        self.head = nn.Linear(linear_input_size, outputs)
+\end{python}
+
+We then skip few functions that will return as the screen and the cart location. 
+
+
+
+step: how many times through environment. observation = [x cart, y cart, pole angle, pole ang. velocity]. reward = 1 for each step. done = when episode is done (maybe pole tipped over too much)
+
+
+
+
+
+
 
 
 
@@ -260,23 +252,6 @@ Explain DQN algorithm in paragraphs, include definitions of state, action,enviro
 Notes: Agents and environment: agent(s) interacts with environment, which can be a simulation, such as the cart pole example. Each step, the agent observes the environment (state of environment) and takes action and receives a reward based on that. Agents learn from repeated trials; these are called episodes. RL framework trains a policy for the agent to follow. Policy shows which actions to take one after the other in order to maximize reward. \\
 
 In RL, want to train the agent to make better decision or act better with each episode. Policy == neural network. 
-
-\begin{python}
-
-# returns an initial observation
-env.reset()
-
-for i in range(20):
-
-  # env.action_space.sample() produces either 0 (left) or 1 (right).
-  observation, reward, done, info = env.step(env.action_space.sample())
-
-  print("step", i, observation, reward, done, info)
-
-env.close()
-\end{python}
-
-step: how many times through environment. observation = [x cart, y cart, pole angle, pole ang. velocity]. reward = 1 for each step. done = when episode is done (maybe pole tipped over too much)
 
 
 
