@@ -361,18 +361,76 @@ def optimize_model():
 We first try to get a batch of Transitions into the model. If there isn't enough Transitions in the memory, we return. If we have enough information stored in the memory, we load a sample from there. Then, we create a batch variable from the transitions variable. The batch holds all the information regarding the state, action, reward and next state. Then, we divide each information from the batch into individual variables.
 
 \begin{mintedbox}{python}
-
-
-
+non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
+                                          batch.next_state)), device=device, dtype=torch.bool)
+    non_final_next_states = torch.cat([s for s in batch.next_state
+                                                if s is not None])
+    state_batch = torch.cat(batch.state)
+    action_batch = torch.cat(batch.action)
+    reward_batch = torch.cat(batch.reward)
 \end{mintedbox} 
 
+On line 1, we are extracting every next state that is not final, which is not None and storing them as a boolean. True for every non-final state and False for final states. This will be helpful afterwards when we will compute the values of the next states. On line 3, we do same thing, except we store the values of the states. Line 5-7, we extract information about states, rewards and actions from the batch and store them into individual variables. Afterwards, we compute the state action values like this:
 
+\begin{mintedbox}{python}
+state_action_values = policy_net(state_batch).gather(1, action_batch)
+\end{mintedbox}
 
+We pass through the policy net with the state batch as the input and observe, which action the policy net would have taken. We get these from our action\_batch variable. Next step is to calculate the next state values:
 
+\begin{mintedbox}{python}
+next_state_values = torch.zeros(BATCH_SIZE, device=device)
+next_state_values[non_final_mask] = target_net(non_final_next_states).max(1)[0].detach()
+\end{mintedbox}
 
+On line 1, we allocate space for the results for our computation we are going to perform on line 2. On line 2, we pass through the target net with obtained next\_state\_values variable and extract the result/action that has the highest reward with the max function. We are using the target net for the improved stability that we mentioned before. The target net that is called on this line is the "old" target net that is constant. Another detail worth explaining is the significance of the non\_final\_mask variable. This is needed here since we will store a value in to next\_state\_values if the state was non-final and 0 if the state was final. This is determined by the values in the non\_final\_mask variable. The last important line of code in this function is the following:
+\begin{mintedbox}{python}
+expected_state_action_values = (next_state_values * GAMMA) + reward_batch
+\end{mintedbox} 
+This is where we actually compute which action to take in order to get to the next state for each state. We multiply the next\_state\_values by gamma in order to guarantee convergence and add the rewards to it. This equation can be found under the DQN algorithm page in the tutorial, where the policy function is described. \\
 
+For the training loop, the main structure looks like this:
 
+\begin{mintedbox}{python}
+num_episodes = any_number
+for i_episode in range(num_episodes):
+    # Initialize the environment and state
+    env.reset()
+    last_screen = get_screen()
+    current_screen = get_screen()
+    state = current_screen - last_screen
+	...
+	for t in count():
+        # Select and perform an action
+        action = select_action(state)
+        _, reward, done, _, _ = env.step(action.item())
+        reward = torch.tensor([reward], device=device)
 
+        # Observe new state
+        last_screen = current_screen
+        current_screen = get_screen()
+        if not done:
+            next_state = current_screen - last_screen
+        else:
+            next_state = None
+
+        # Store the transition in memory
+        memory.push(state, action, next_state, reward)
+
+        # Move to the next state
+        state = next_state
+
+        # Perform one step of the optimization (on the policy network)
+        optimize_model()
+        if done:
+            break
+
+        # Update the target network, copying all weights and biases in DQN
+        if t % TARGET_UPDATE == 0:
+            target_net.load_state_dict(policy_net.state_dict())
+\end{mintedbox}
+
+We iterate through the model for num_episodes times. In each episode, we first reset the environment, initialize the screen, get the current and the last screen, which are identical at the start. The main reason why we reset the environment is because episodes are finished after a certain time period or they fail. So, we have to start again. 
 
 
 
