@@ -4,3 +4,8 @@
 *.log
 *.aux
 *.synctex.gz
+train*
+_minted*
+*.listing
+settings.json
+data*
