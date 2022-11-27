@@ -54,6 +54,7 @@
     language=C
 }
 
+\DeclareMathOperator*{\argmax}{argmax} % thin space, limits underneath in displays
 
 
 % For minted -> Python
@@ -435,19 +436,57 @@ We iterate through the model for num\_episodes times. In each episode, we first 
 
 
 \section{Problem 2}
-Explain DQN algorithm in paragraphs, include definitions of state, action,environment, reward.
+In reinforcement learning, we want to create a policy function $\pi$ that will maximize the reward in a given state $s$ after performing some action $a$ in a certain environment. The function that computes the reward from $s$ and $a$ is the $Q$ function. In the CartPole case,
+\begin{itemize}
+\item the states: 
+\begin{itemize}
+\item the cart's x-coordinate
+\item cart's velocity
+\item the pole's angular velocity
+\item the pole's angle
+\end{itemize}
+\item the environment: the simulation that is simulating cart with the pole that is on a rail
+\item actions:
+\begin{itemize}
+\item move cart to right
+\item move cart to left
+\end{itemize} 
+\item reward:
+\begin{itemize}
+\item reward = 1, when the pole stays within the specified angle (±12°) and cart's x-coordinate is in range of (-2.4, 2.4)
+\item reward = 0, when the above mentioned conditions are not met, then we fail and restart the environment
+\end{itemize} 
+\end{itemize}  
 
-Notes: Agents and environment: agent(s) interacts with environment, which can be a simulation, such as the cart pole example. Each step, the agent observes the environment (state of environment) and takes action and receives a reward based on that. Agents learn from repeated trials; these are called episodes. RL framework trains a policy for the agent to follow. Policy shows which actions to take one after the other in order to maximize reward. \\
+Essentially we want:
+$$
+\pi^*(s) = \argmax_a \ Q^*(s,a)
+$$
+However, we cannot achieve this since we don't know every possible state, action and reward in the world. What we do instead is, we try to approximate the $Q$ function with the help of neural networks. We assume that the $Q$ function is a Bellman equation and can write it like this:
 
-In RL, want to train the agent to make better decision or act better with each episode. Policy == neural network. 
+$$
+Q(s,a) = r_0 + \gamma Q(s',\pi(s'))
+$$
+This equation describes that the current $Q$ function is the sum of the current reward $r_0$ and the $Q$ function of the future state $s'$ and action $a' = \pi(s')$ multiplied by a discount rate $\gamma$. This is a very powerful tool since we can describe the $Q$ function recursively.
+
+We can rewrite this equation into what will be inputted into the Huber loss.
+For the Huber loss function, we input:
+$$
+Huber\_Loss = \E \left[ \left(r + \gamma *\ \max_{a'} Q(s',a'; \theta_k) - Q(s,a;\theta_k)\right)^2 \right]
+$$
+The first term of the subtraction is the target value that we obtain by passing through the target\_net with non\_final\_next\_states and we get the next\_state\_values. We then multiply the next\_state\_values by $\gamma$ and add the reward batch to it. $s'$ would be the future state, $a'$ the future action and $\theta$ are the parameters. The second term on the right is the prediction, the values that we get when we take an action $a$ in the state $s$. We get this value when we are inputting the state\_batch into the policy\_net to get the state\_action\_values. 
+
+
+
+
+
 
 
 
 
 
 \section{Problem 3}
-Performance metrics and plots
-
+For performance metrics, we can observe the duration of each episode or the reward, the overall cost of each episode and the epsilon.
 
 
 
