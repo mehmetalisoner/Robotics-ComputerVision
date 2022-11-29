@@ -556,11 +556,39 @@ Here are the results in that order:
 \end{figure}
 
 
-The results are as expected. The worst performance out of the three is with the random agent, the second worst is the agent with the small training time (or less number of episodes) and the best 
+The results are as expected. The worst performance out of the three is with the random agent, the second worst is the agent with the small training time (or less number of episodes) and the best performance comes from the trained agent with the highest training time. In Fig.1, we can observe that the episode duration on average stays constant and has a value of 25-30. This makes sense since the agent doesn't update it's policy net efficiently because it is selecting random action. There are some outliers that happen (peak at 79 and 70) because of the randomness of the action selection module. The module might take the all of the right actions in one episode. However, the probability of that happening is low because it has to randomly select all of the actions successively and it is reflected in this plot. 
+
+The second figure, Fig.2, shows more promising results. The performance in the first 70 episodes is in fact worse the the first 70 episodes with a random agent but there is sharp jump in performance around episode 80. Here, we can see that the performance significantly increases and stays at this level. We can also conclude that training an agent for 100 episodes isn't quite enough since it doesn't pass the "solved" threshold of 200 in this environment. The results seem promising however and we can predict that the duration of each episode is going to increase with more training. This agent outperforms the random agent even though it had 1/6 of episodes to train in.
+
+The third figure, Fig.3, proves our prediction we had with Fig.2. Again, around 100 episodes there is a sharp peak that seems to be constant until episode = 200. From there, there is a linear increase in performance until episode = 450 from where the performance increase improves even further. The performance increase is a lot steeper. It is also around episode = 450, where the module passes the "solved" threshold of 200. After some time, the module cannot improve any further and it stagnates at around episode = 550. This is all expected and seems ordinary. What is surprising is that both train models had much worse performance in the first 60-80 episodes than the random agent. The performance in the first hundred episode also seem to decrease when we increase the number of episodes we want the model to simulate. This doesn't matter since we can arrive a higher episode duration or overall reward in the long run.
 
 
 \section{Problem 4}
-Three other problems for RL; state, action, environment and reward for each
+Here are three other problems that can be solved with RL on open-AI gym:
+
+\begin{enumerate}
+\item Mountain Car (Classic Control):
+\begin{itemize}
+\item State: In this environment, there are only two states. The position of the car along the x-axis and the velocity of the car. The x-coordinate and the velocity of the car can from $\left(-\infty, \infty\right)$.
+\item Action: There are three actions in this environment. Accelerate to the right, accelerate to the left or don't accelerate at all.  
+\item Environment: A car is at the bottom of a "sinusoidal valley" and has to get out of that valley by reaching the flag at the top of the hill.
+\item Reward: In this environment, the reward is -1 for each timestep where the car hasn't reached the flag on top of the hill. So, the car has to reach the flag as quickly as possible.  
+\end{itemize}
+
+
+
+\item Car Racing (Box2D): 
+\begin{itemize}
+\item State: In this environment, there are only two states. The position of the car along the x-axis and the velocity of the car. The x-coordinate and the velocity of the car can from $\left(-\infty, \infty\right)$.
+\item Action: There are three actions in this environment. Accelerate to the right, accelerate to the left or don't accelerate at all.  
+\item Environment: A car is at the bottom of a "sinusoidal valley" and has to get out of that valley by reaching the flag at the top of the hill.
+\item Reward: In this environment, the reward is -1 for each timestep where the car hasn't reached the flag on top of the hill. So, the car has to reach the flag as quickly as possible.  
+\end{itemize}
+
+\end{enumerate}
+
+
+
 
 
 \begin{comment}
