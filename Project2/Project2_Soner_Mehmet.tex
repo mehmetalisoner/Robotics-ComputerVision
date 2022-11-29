@@ -11,6 +11,10 @@
 
 \usepackage[dvipsnames]{xcolor}
 \usepackage{matlab-prettifier}
+\usepackage{float}
+\usepackage[export]{adjustbox}
+
+
 
 \numberwithin{equation}{section}
 \newtheorem{thm}{Theorem}[section]
@@ -204,7 +208,7 @@ Department of Electrical \& Computer Engineering \\[0.2in]
 \huge \blue 
 
 \begin{center}
-Project 2 - Reinforcement Learning
+Project 2 - Reinforcement Learning: Cart Pole
 \end{center}
 
 \vspace{1in}
@@ -486,12 +490,73 @@ The first term of the subtraction is the target value that we obtain by passing 
 
 
 \section{Problem 3}
-For performance metrics, we can observe the duration of each episode or the reward, the overall cost of each episode and the epsilon.
+For performance metrics, we can observe the duration of each episode or the reward. This gives us basic understanding of how well the model performs. For every action where the pole is still upright, we add +1 to the reward variable we have or we add up every action that didn't result into a final state and include the terminating state as well. We do this with a for loop and the iteration variable in the loop condition:
+
+
+\begin{mintedbox}{python}
+for t in count():
+	if isRandom  == True:
+	  action = torch.tensor([[env.action_space.sample()]], device=device, dtype=torch.long)
+	else:
+	  action = select_action(state,policy_net)
+	observation, reward, terminated, truncated, _ = env.step(action.item())
+	reward = torch.tensor([reward], device=device)
+	done = terminated or truncated
+
+	...
+	
+	if done:
+		episode_durations.append(t + 1)
+		break
+\end{mintedbox}
+
+This is how the loop for each episode looks like. When we have a terminal state, then we go into the if statement on line 12 and add how many steps we have taken, which equals to the duration of one episode. We then plot these duration with a helper plotting function. Here are the result of three scenarios, namely:
+\begin{enumerate}
+\item A random agent with num\_episodes = 600
+\item A trained agent with num\_episodes = 100
+\item A trained agent with num\_episodes = 600
+\end{enumerate}
+
+
+Here are the results in that order:
+
+\begin{figure}[H]
+	\centering
+	
+	\includegraphics[width=\linewidth,cframe=blue 2.5pt 2.5pt]{random_agent.png}
+	\\	
+	\vspace{0.1in}
+	\textbf{Fig.1:} A random agent with num\_episodes = 600
+	\\
+	\label{fig:Fig.1}
+\end{figure}
 
 
 
+\begin{figure}[H]
+	\centering
+	
+	\includegraphics[width=\linewidth,cframe=blue 2.5pt 2.5pt]{agent100.png}
+	\\	
+	\vspace{0.1in}
+	\textbf{Fig.2:} A trained agent with num\_episodes = 100
+	\\
+	\label{fig:Fig.2}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	
+	\includegraphics[width=\linewidth,cframe=blue 2.5pt 2.5pt]{agent600.png}
+	\\	
+	\vspace{0.1in}
+	\textbf{Fig.3:} A trained agent with num\_episodes = 600
+	\\
+	\label{fig:Fig.3}
+\end{figure}
 
 
+The results are as expected. The worst performance out of the three is with the random agent, the second worst is the agent with the small training time (or less number of episodes) and the best 
 
 
 \section{Problem 4}
@@ -499,14 +564,15 @@ Three other problems for RL; state, action, environment and reward for each
 
 
 \begin{comment}
-\begin{figure}
+\begin{figure}[H]
 	\centering
-	\hspace*{-3.0cm}
-	\includegraphics[scale=0.0001]{Q4.2M.png}
+	
+	\includegraphics[width=\linewidth,cframe=blue 2.5pt 2.5pt]{agent600.png}
 	\\	
-	\textbf{Fig.7:} Comparator for 3-bit signed integers, $a=-2=[1,1,0]$
+	\vspace{0.1in}
+	\textbf{Fig.3:} A trained agent with num\_episodes = 600
 	\\
-	\label{fig:Fig.7}
+	\label{fig:Fig.3}
 \end{figure}
 \end{comment}
 
