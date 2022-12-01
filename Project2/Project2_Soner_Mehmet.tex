@@ -242,11 +242,8 @@ Date: \today
 
 
 
-\section{Problem 1}
-Cart Pole code assignment, code + explanation
-
-
-I have structured the code into two main parts: a part before and after training. The part before training is mainly to test out components such as the video capturing of an episode, the overall environment and the functions built within. First we call the following terminal commands:
+\section*{Problem 1}
+For this section, I have followed the CartPole tutorial from pytorch's official website. I am going through the details of that specific tutorial in this section. However, the performance of this model turned out to be unstable and poor. In order to get better performance and video results, I switched over to the github commit that was provided one of our fellow students. The results you see in the Jupyter Notebook and the performance metric plots are obtained through the \textbf{github commit} code. The specific link for that github repo is: \url{https://github.com/SiftingSands/tutorials/blob/DQN_revise_training/intermediate_source/reinforcement_q_learning.py}. Now, the detailed of the pytorch tutorial:
 
 \begin{mintedbox}{python}
 !apt-get update
@@ -439,7 +436,7 @@ We iterate through the model for num\_episodes times. In each episode, we first 
 
 
 
-\section{Problem 2}
+\section*{Problem 2}
 In reinforcement learning, we want to create a policy function $\pi$ that will maximize the reward in a given state $s$ after performing some action $a$ in a certain environment. The function that computes the reward from $s$ and $a$ is the $Q$ function. In the CartPole case,
 \begin{itemize}
 \item the states: 
@@ -469,16 +466,16 @@ $$
 However, we cannot achieve this since we don't know every possible state, action and reward in the world. What we do instead is, we try to approximate the $Q$ function with the help of neural networks. We assume that the $Q$ function is a Bellman equation and can write it like this:
 
 $$
-Q(s,a) = r_0 + \gamma Q(s',\pi(s'))
+Q^{\pi}(s,a) = r_0 + \gamma Q^{\pi}(s',\pi(s'))
 $$
 This equation describes that the current $Q$ function is the sum of the current reward $r_0$ and the $Q$ function of the future state $s'$ and action $a' = \pi(s')$ multiplied by a discount rate $\gamma$. This is a very powerful tool since we can describe the $Q$ function recursively.
 
 We can rewrite this equation into what will be inputted into the Huber loss.
-For the Huber loss function, we input:
+For the Huber loss function, we input what is called the temporal difference error, $\delta$:
 $$
-Huber\_Loss = \E \left[ \left(r + \gamma *\ \max_{a'} Q(s',a'; \theta_k) - Q(s,a;\theta_k)\right)^2 \right]
+\delta = Q(s,a) - \left(r_0 + \gamma \max_a Q(s',\pi(s'))\right)
 $$
-The first term of the subtraction is the target value that we obtain by passing through the target\_net with non\_final\_next\_states and we get the next\_state\_values. We then multiply the next\_state\_values by $\gamma$ and add the reward batch to it. $s'$ would be the future state, $a'$ the future action and $\theta$ are the parameters. The second term on the right is the prediction, the values that we get when we take an action $a$ in the state $s$. We get this value when we are inputting the state\_batch into the policy\_net to get the state\_action\_values. 
+The first term of the subtraction is the prediction, the values that we get when we take an action $a$ in the state $s$. We get this value when we are inputting the state\_batch into the policy\_net to get the state\_action\_values. The second term of the subtraction is the target value that we obtain by passing through the target\_net with non\_final\_next\_states. The results of that pass through are the next\_state\_values. We then multiply the next\_state\_values by $\gamma$ and add the reward batch to it. $s'$ would be the future state, $a'$ the future action.  We want to minimize this error since we want to have our prediction and target values as close as possible to each other. We do that by inputting that into a Huber loss function. 
 
 
 
@@ -489,7 +486,7 @@ The first term of the subtraction is the target value that we obtain by passing 
 
 
 
-\section{Problem 3}
+\section*{Problem 3}
 For performance metrics, we can observe the duration of each episode or the reward. This gives us basic understanding of how well the model performs. For every action where the pole is still upright, we add +1 to the reward variable we have or we add up every action that didn't result into a final state and include the terminating state as well. We do this with a for loop and the iteration variable in the loop condition:
 
 
@@ -563,7 +560,7 @@ The second figure, Fig.2, shows more promising results. The performance in the f
 The third figure, Fig.3, proves our prediction we had with Fig.2. Again, around 100 episodes there is a sharp peak that seems to be constant until episode = 200. From there, there is a linear increase in performance until episode = 450 from where the performance increase improves even further. The performance increase is a lot steeper. It is also around episode = 450, where the module passes the "solved" threshold of 200. After some time, the module cannot improve any further and it stagnates at around episode = 550. This is all expected and seems ordinary. What is surprising is that both train models had much worse performance in the first 60-80 episodes than the random agent. The performance in the first hundred episode also seem to decrease when we increase the number of episodes we want the model to simulate. This doesn't matter since we can arrive a higher episode duration or overall reward in the long run.
 
 
-\section{Problem 4}
+\section*{Problem 4}
 Here are three other problems that can be solved with RL on open-AI gym:
 
 \begin{enumerate}
@@ -571,7 +568,7 @@ Here are three other problems that can be solved with RL on open-AI gym:
 \begin{itemize}
 \item State: In this environment, there are only two states. The position of the car along the x-axis and the velocity of the car. The x-coordinate and the velocity of the car can from $\left(-\infty, \infty\right)$.
 \item Action: There are three actions in this environment. Accelerate to the right, accelerate to the left or don't accelerate at all.  
-\item Environment: A car is at the bottom of a "sinusoidal valley" and has to get out of that valley by reaching the flag at the top of the hill.
+\item Environment: A car is at the bottom of a "sinusoidal valley" and has to get out of that valley by reaching the flag at the top of the hill. The starting position of the car is a random value in the range of [-0.6,-0.4]. The episode ends when the car's x-coordinate is greater than or equal to 0.5, which means it has reached the flag or when the episode length is over 200.
 \item Reward: In this environment, the reward is -1 for each timestep where the car hasn't reached the flag on top of the hill. So, the car has to reach the flag as quickly as possible.  
 \end{itemize}
 
@@ -579,11 +576,28 @@ Here are three other problems that can be solved with RL on open-AI gym:
 
 \item Car Racing (Box2D): 
 \begin{itemize}
-\item State: In this environment, there are only two states. The position of the car along the x-axis and the velocity of the car. The x-coordinate and the velocity of the car can from $\left(-\infty, \infty\right)$.
-\item Action: There are three actions in this environment. Accelerate to the right, accelerate to the left or don't accelerate at all.  
-\item Environment: A car is at the bottom of a "sinusoidal valley" and has to get out of that valley by reaching the flag at the top of the hill.
-\item Reward: In this environment, the reward is -1 for each timestep where the car hasn't reached the flag on top of the hill. So, the car has to reach the flag as quickly as possible.  
+\item State: In this environment, the observation space consists of 96x96 pixels, which determine the track and the position of the racing car.
+\item Action: There are three actions if the environment is continuous and 5 if discrete. In the continuous scenario we have: steering (-1 full left, +1 full right), gas and break. In the discrete scenario, we have: do nothing, turn right, turn left, gas, brake.
+\item Environment: A racing car is on a racing track and is trying to complete it. It starts at the starting point of the track, in the middle of center of the road. The episode ends when all tiles have been visited. The racing car can go off the track but it will get rewarded with -100 and "die" per the Gym documentation.
+\item Reward: In this environment, the reward is -0.1 for every frame that the car took to get to the episode's end and +1000/N, where N is the amount of tiles that the car visited.
 \end{itemize}
+
+
+
+
+
+
+
+
+
+\item : Frozen Lake (Toy Text):
+\begin{itemize}
+\item State: In this environment, the observation space consists of one numeric value, which indicates the position of the agent on the lake. It can be calculated with $agent{position} = current\_row * nrows + current\_col$.
+\item Action: There are four actions that the agent can take in this environment. Go up, left, down and right.
+\item Environment: An agent has to reach a goal $G$ on a frozen lake with holes $H$ from the starting point $S$. The main objective is to reach the goal \textbf{without} falling into one of the holes. The agent's movement may not be clear since it will not move into the direction of the goal all the time. This is simply because of the slippery nature of the frozen lake.
+\item Reward: In this environment, the only time you get a +1 is when you reach the goal. All other actions resulting into reaching a hole or any frozen tile, "pay out" a 0 as reward.
+\end{itemize}
+
 
 \end{enumerate}
 
