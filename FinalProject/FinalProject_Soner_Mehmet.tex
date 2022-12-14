@@ -208,7 +208,7 @@ Department of Electrical \& Computer Engineering \\[0.2in]
 \huge \blue 
 
 \begin{center}
-Final Project - Reinforcement Learning: Super Mario
+Final Project - Reinforcement Learning: Super Mario Bros.
 \end{center}
 
 \vspace{1in}
@@ -242,202 +242,99 @@ Date: \today
 
 
 
-\section*{Problem 1}
-For this section, I have followed the CartPole tutorial from pytorch's official website. I am going through the details of that specific tutorial in this section. However, the performance of this model turned out to be unstable and poor. In order to get better performance and video results, I switched over to the github commit that was provided one of our fellow students. The results you see in the Jupyter Notebook and the performance metric plots are obtained through the \textbf{github commit} code. The specific link for that github repo is: \url{https://github.com/SiftingSands/tutorials/blob/DQN_revise_training/intermediate_source/reinforcement_q_learning.py}. Now, the detailed of the pytorch tutorial:
+\section*{Introduction}
+For the final project of this course, I wanted to create and train my own agent for a video game of my choice. I got heavily interested in reinforcement learning after completing the CartPole example on the official PyTorch page. The fact that you can train an agent to do certain tasks seemed so absurd and out of this world. My ultimate goal is to create my own implementation of the first example of reinforcement learning that I witnessed: an autonomous vehicle in a 3-D open-world game with heavy traffic. At that time I didn't know that this was reinforcement learning but looking back now, things are a bit clearer. Although this is my ultimate goal, I wanted to get familiar with training agents in much simpler environments. Thus, I chose the to train one of the most popular Nintendo characters: Mario. The specific game which I wanted to train my agent in was the original 1983 Super Mario Bros, which came out on the NES. I have played it on newer versions of the NES and I absolutely enjoyed it. I wanted to train my agent in the first level of the game, which isn't hard to complete as a human. So, I was curious on how an agent would perform in a rather simple but still more challenging than CartPole, since there is an increased amount of factors that can influence the behavior of the agent. 
+
+
+
+\section*{Methods}
+
+\subsection*{Environments}
+In this project, I took multiple approaches ranging from utilizing various wrappers to fine tuning. I also tried different models and policies with increasing total time steps. First, let me explain the details of the specific environment that I found for this use case. The environment is called gym-super-mario-bros and can be installed with a simple pip command. 
+\begin{minted}
+!pip install gym-super-mario-bros
+\end{minted}
+
+The documentation for this environment can be found under: \href{https://pypi.org/project/gym-super-mario-bros/}. In the documentation, there are various versions of this particular environment:
+\begin{enumerate}
+\item standard ROM
+\item downsampled ROM
+\item pixel ROM
+\item rectangle ROM
+\end{enumerate}
+
+The first environment is the classic game without any changes, the second one only contains the most important pieces of information (e.g.: clouds and the sky are not visible, they are black), the third one is heavily pixelated and the last environment renders objects in the shape of rectangles. I wanted to go with the standard game since that would be a lot more impressive and interesting to demo. The action space here can be chosen by the user. There is a selection of three movement types, namely:
+
+\begin{enumarte}
+\item RIGHT_ONLY
+\item SIMPLE_MOVEMENT
+\item COMPLEX_MOVEMENT
+\end{enumaree}
+
+The first type of actions is self-explanatory, there are only movements that contain a 'right' movement. The second movement type differs slightly from the first one. It contains a 'left' movement and a straight jump up, 'A'. The last one contains almost possible direction that you can have on an actual joypad, including crouching, standing up, jumping back and more. This is the code for each movement type on their github:
 
 \begin{mintedbox}{python}
-!apt-get update
-!apt-get install -y xvfb x11-utils
-%pip install pyvirtualdisplay==0.2.*
-%pip install gym[classic_control]
+
+ actions for the simple run right environment
+RIGHT_ONLY = [
+    ['NOOP'],
+    ['right'],
+    ['right', 'A'],
+    ['right', 'B'],
+    ['right', 'A', 'B'],
+]
+
+
+# actions for very simple movement
+SIMPLE_MOVEMENT = [
+    ['NOOP'],
+    ['right'],
+    ['right', 'A'],
+    ['right', 'B'],
+    ['right', 'A', 'B'],
+    ['A'],
+    ['left'],
+]
+
+
+# actions for more complex movement
+COMPLEX_MOVEMENT = [
+    ['NOOP'],
+    ['right'],
+    ['right', 'A'],
+    ['right', 'B'],
+    ['right', 'A', 'B'],
+    ['A'],
+    ['left'],
+    ['left', 'A'],
+    ['left', 'B'],
+    ['left', 'A', 'B'],
+    ['down'],
+    ['up'],
+]
+\end{mindtedbox}
+
+'NOOP' stands for no operation, so the agent stands still. 'A' stands for jumping, 'B' stands for sprinting and the direction are ['right','up','left','down']. These movement types are imported through the simple command in any Python file:
+\begin{mintedbox}{python}
+from nes_py.wrappers import JoypadSpace
+import gym_super_mario_bros
+from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
+env = gym_super_mario_bros.make('SuperMarioBros-v0')
+env = JoypadSpace(env, SIMPLE_MOVEMENT)
 \end{mintedbox}
 
-I am calling apt-get update since I ran into issues with xvfb couple of times and this seem to resolve it. We install xvfb and pyvirtualdisplay for the video capturing. Then we import the gym package and create the environment for "CartPole":
+This is how we would setup the most basic environment to train our agent in. As mentioned before, we install the gym-super-mario-bros package with pip, import that specific package, and wrap the movement type of choice with a JoypadSpace wrapper around our environment. This is sufficient enough to train our agent however in order to improve performance or if we want to train our model for large amount of total time steps, we need add some additional wrappers for that. We want good data/environment in order to create a good policy.
 
-\begin{mintedbox}{python}
-import gym
-if gym.__version__ < '0.26':
-    env = gym.make('CartPole-v0', new_step_api=True, render_mode='single_rgb_array').unwrapped
-else:
-    env = gym.make('CartPole-v0', render_mode='rgb_array').unwrapped
-\end{mintedbox}
 
-After this, I will skip few things such as the video capturing and importing other various packages. I want to focus on the DQN's linear layer. In this model, we have to have two possible outputs in our final/linear layer since we will either push the cart to the right or to the left. In order to add this layer, we have to know the output size of each convolutional layer so that we have the right input size for the linear layer. That's why we call conv2d\_size\_out three times since we have three convolutional layers. We then calculate the input size and add it with: 
-
-\begin{mintedbox}{python}
-class DQN(nn.Module):
-# Architecture code (3 conv layers, 3 batch norms)
-...
-        def conv2d_size_out(size, kernel_size = 5, stride = 2):
-            return (size - (kernel_size - 1) - 1) // stride  + 1
-        convw = conv2d_size_out(conv2d_size_out(conv2d_size_out(w)))
-        convh = conv2d_size_out(conv2d_size_out(conv2d_size_out(h)))
-        linear_input_size = convw * convh * 32
-        self.head = nn.Linear(linear_input_size, outputs)
-\end{mintedbox}
-
-We then implement two functions that will get the cart's location on the screen and will get the screend itself:
-
-\begin{mintedbox}{python}
-def get_cart_location(screen_width):
-world_width = env.x_threshold * 2
-    scale = screen_width / world_width
-    return int(env.state[0] * scale + screen_width / 2.0)  # MIDDLE OF CART
-
-def get_screen():
-screen = env.render().transpose((2, 0, 1))
-    # Cart is in the lower half, so strip off the top and bottom of the screen
-    _, screen_height, screen_width = screen.shape
-...
-cart_location = get_cart_location(screen_width)
-...
-screen = screen[:, :, slice_range]
-\end{mintedbox}
-
-I have mainly included the important lines of the two functions in the snippet. These two functions are crucial since we can describe the current state of the agent through the location of the cart on the screen. We achieve this with some algebra and the information we have about the environment's/simulation's dimensions. \\
-
-Now we get to the part where we train the DQN.
-First we initialize the network, the optimization function and the memory.
-
-\begin{mintedbox}{python}
-n_actions = env.action_space.n
-policy_net = DQN(screen_height, screen_width, n_actions).to(device)
-target_net = DQN(screen_height, screen_width, n_actions).to(device)
-target_net.load_state_dict(policy_net.state_dict())
-target_net.eval()
-
-optimizer = optim.RMSprop(policy_net.parameters())
-memory = ReplayMemory(10000)
-\end{mintedbox}
-
-$n\_actions$ is the amount of actions we can take in the environment. In this case, it will be two (move cart to right or left). Then, we initialize the policy and the target network. This is mainly for stability since it servers as a "back-up" of the policy network. The target network is basically a copy of the policy network with frozen parameters that get updated once in a while (we copy the parameters into target\_net on line 5 and put the network in eval mode on line 6). So, if overfitting or other errors were to happen in the policy network, the target network is there for stability. On line 6, we initialize the memory by creating a ReplayMemory object. The ReplayMemory class looks like this:
-
-\begin{mintedbox}{python}
-Transition = namedtuple('Transition',
-                        ('state', 'action', 'next_state', 'reward'))
-class ReplayMemory(object):
-
-    def __init__(self, capacity):
-        self.memory = deque([],maxlen=capacity)
-
-    def push(self, *args):
-        """Save a transition"""
-        self.memory.append(Transition(*args))
-
-    def sample(self, batch_size):
-        return random.sample(self.memory, batch_size)
-
-    def __len__(self):
-        return len(self.memory)
-\end{mintedbox}
-
-The ReplayMemory class can hold Transition and  can return random Transitions of a certain batch size. This is crucial since the policy network will learn from recent Transition tuples in the ReplayMemory object. It will use that information to optimize the model, to achieve a better policy. So, the memory object serves as the memory for the training.\\
-
-Next, I will explain some details in the select\_action() and optimize\_model() function. The way we choose an action is the following:
-
-\begin{mintedbox}{python}
-def select_action(state):
-...
-    sample = random.random()
-    eps_threshold = EPS_END + (EPS_START - EPS_END) * \
-        math.exp(-1. * steps_done / EPS_DECAY)
-    steps_done += 1
-    if sample > eps_threshold:
-        with torch.no_grad():
-            return policy_net(state).max(1)[1].view(1, 1)
-    else:
-        return torch.tensor([[random.randrange(n_actions)]], device=device, dtype=torch.long)
-\end{mintedbox}
-Given an input state, we select the action. First, we get a random value and compare it to our epsilon threshold. If this random value is over the threshold, we go through the policy net with the input state and take the action with the highest reward. If the random value doesn't cross the threshold, we then select a random action out of the possible actions in this environment (right, left). With this function, we can now define the model optimization function. \\
-
-The optimize\_model() function is where the RL algorithm is implemented. First, I will explain how we "load" the necessary data.
-
-\begin{mintedbox}{python}
-def optimize_model():
-    if len(memory) < BATCH_SIZE:
-        return
-    transitions = memory.sample(BATCH_SIZE)
-    batch = Transition(*zip(*transitions))
-\end{mintedbox}
-
-We first try to get a batch of Transitions into the model. If there isn't enough Transitions in the memory, we return. If we have enough information stored in the memory, we load a sample from there. Then, we create a batch variable from the transitions variable. The batch holds all the information regarding the state, action, reward and next state. Then, we divide each information from the batch into individual variables.
-
-\begin{mintedbox}{python}
-non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
-                                          batch.next_state)), device=device, dtype=torch.bool)
-    non_final_next_states = torch.cat([s for s in batch.next_state
-                                                if s is not None])
-    state_batch = torch.cat(batch.state)
-    action_batch = torch.cat(batch.action)
-    reward_batch = torch.cat(batch.reward)
-\end{mintedbox} 
-
-On line 1, we are extracting every next state that is not final, which is not None and storing them as a boolean. True for every non-final state and False for final states. This will be helpful afterwards when we will compute the values of the next states. On line 3, we do same thing, except we store the values of the states. Line 5-7, we extract information about states, rewards and actions from the batch and store them into individual variables. Afterwards, we compute the state action values like this:
-
-\begin{mintedbox}{python}
-state_action_values = policy_net(state_batch).gather(1, action_batch)
-\end{mintedbox}
-
-We pass through the policy net with the state batch as the input and observe, which action the policy net would have taken. We get these from our action\_batch variable. Next step is to calculate the next state values:
-
-\begin{mintedbox}{python}
-next_state_values = torch.zeros(BATCH_SIZE, device=device)
-next_state_values[non_final_mask] = target_net(non_final_next_states).max(1)[0].detach()
-\end{mintedbox}
-
-On line 1, we allocate space for the results for our computation we are going to perform on line 2. On line 2, we pass through the target net with obtained next\_state\_values variable and extract the result/action that has the highest reward with the max function. We are using the target net for the improved stability that we mentioned before. The target net that is called on this line is the "old" target net that is constant. Another detail worth explaining is the significance of the non\_final\_mask variable. This is needed here since we will store a value in to next\_state\_values if the state was non-final and 0 if the state was final. This is determined by the values in the non\_final\_mask variable. The last important line of code in this function is the following:
-\begin{mintedbox}{python}
-expected_state_action_values = (next_state_values * GAMMA) + reward_batch
-\end{mintedbox} 
-This is where we actually compute which action to take in order to get to the next state for each state. We multiply the next\_state\_values by gamma in order to guarantee convergence and add the rewards to it. This equation can be found under the DQN algorithm page in the tutorial, where the policy function is described. \\
-
-For the training loop, the main structure looks like this:
-
-\begin{mintedbox}{python}
-num_episodes = any_number
-for i_episode in range(num_episodes):
-    # Initialize the environment and state
-    env.reset()
-    last_screen = get_screen()
-    current_screen = get_screen()
-    state = current_screen - last_screen
-	...
-	for t in count():
-        # Select and perform an action
-        action = select_action(state)
-        _, reward, done, _, _ = env.step(action.item())
-        reward = torch.tensor([reward], device=device)
-
-        # Observe new state
-        last_screen = current_screen
-        current_screen = get_screen()
-        if not done:
-            next_state = current_screen - last_screen
-        else:
-            next_state = None
-
-        # Store the transition in memory
-        memory.push(state, action, next_state, reward)
-
-        # Move to the next state
-        state = next_state
-
-        # Perform one step of the optimization (on the policy network)
-        optimize_model()
-        if done:
-            break
-
-        # Update the target network, copying all weights and biases in DQN
-        if t % TARGET_UPDATE == 0:
-            target_net.load_state_dict(policy_net.state_dict())
-\end{mintedbox}
-
-We iterate through the model for num\_episodes times. In each episode, we first reset the environment, initialize the screen, get the current and the last screen, which are identical at the start. The main reason why we reset the environment is because episodes are finished after a certain time period or they fail. So, we have to start again. Then on line 9, we start the episode. We call the select\_action() that will return an action that we will input into the environment on line 12. This line of code steps through the environment and applies the inputted action in the environment. As the output, we get the reward and a boolean that indicates if this was a final state. We update the states by storing the current\_screen into last\_screen. This can be applied since we simulated the action in the environment on line 12, thus changed the actual current state. The current\_screen variable holds the old screen after this. In order to update current\_screen, we just call get\_screen(). Based on the done variable, we either restart or we calculate the next\_state, which is the difference between the current and the last screen, and transition into that. Before going to the next iteration in the loop, we save the necessary data from this transition and call optimize\_model(). Every now and then we also update the target net's parameters as seen on line 35-36.
+\subsection*{Additional Wrappers}
 
 
 
-\section*{Problem 2}
-In reinforcement learning, we want to create a policy function $\pi$ that will maximize the reward in a given state $s$ after performing some action $a$ in a certain environment. The function that computes the reward from $s$ and $a$ is the $Q$ function. In the CartPole case,
+
+
+
+
+
 \begin{itemize}
 \item the states: 
 \begin{itemize}
@@ -486,7 +383,7 @@ The first term of the subtraction is the prediction, the values that we get when
 
 
 
-\section*{Problem 3}
+\section*{Results}
 For performance metrics, we can observe the duration of each episode or the reward. This gives us basic understanding of how well the model performs. For every action where the pole is still upright, we add +1 to the reward variable we have or we add up every action that didn't result into a final state and include the terminating state as well. We do this with a for loop and the iteration variable in the loop condition:
 
 
@@ -525,7 +422,7 @@ The second figure, Fig.2, shows more promising results. The performance in the f
 The third figure, Fig.3, proves our prediction we had with Fig.2. Again, around 100 episodes there is a sharp peak that seems to be constant until episode = 200. From there, there is a linear increase in performance until episode = 450 from where the performance increase improves even further. The performance increase is a lot steeper. It is also around episode = 450, where the module passes the "solved" threshold of 200. After some time, the module cannot improve any further and it stagnates at around episode = 550. This is all expected and seems ordinary. What is surprising is that both train models had much worse performance in the first 60-80 episodes than the random agent. The performance in the first hundred episode also seem to decrease when we increase the number of episodes we want the model to simulate. This doesn't matter since we can arrive a higher episode duration or overall reward in the long run.
 
 
-\section*{Problem 4}
+\section*{Conclusion}
 Here are three other problems that can be solved with RL on open-AI gym:
 
 \begin{enumerate}
