@@ -251,11 +251,11 @@ For the final project of this course, I wanted to create and train my own agent 
 
 \subsection*{Environments}
 In this project, I took multiple approaches ranging from utilizing various wrappers to fine tuning. I also tried different models and policies with increasing total time steps. First, let me explain the details of the specific environment that I found for this use case. The environment is called gym-super-mario-bros and can be installed with a simple pip command. 
-\begin{minted}
-!pip install gym-super-mario-bros
-\end{minted}
+\begin{mintedbox}{python}
+pip install gym-super-mario-bros
+\end{mintedbox}
 
-The documentation for this environment can be found under: \href{https://pypi.org/project/gym-super-mario-bros/}. In the documentation, there are various versions of this particular environment:
+The documentation for this environment can be found under: https://pypi.org/project/gym-super-mario-bros/. In the documentation, there are various versions of this particular environment:
 \begin{enumerate}
 \item standard ROM
 \item downsampled ROM
@@ -263,19 +263,32 @@ The documentation for this environment can be found under: \href{https://pypi.or
 \item rectangle ROM
 \end{enumerate}
 
-The first environment is the classic game without any changes, the second one only contains the most important pieces of information (e.g.: clouds and the sky are not visible, they are black), the third one is heavily pixelated and the last environment renders objects in the shape of rectangles. I wanted to go with the standard game since that would be a lot more impressive and interesting to demo. The action space here can be chosen by the user. There is a selection of three movement types, namely:
+The first environment is the classic game without any changes, the second one only contains the most important pieces of information (e.g.: clouds and the sky are not visible, they are black), the third one is heavily pixelated and the last environment renders objects in the shape of rectangles. I wanted to go with the standard game since that would be a lot more impressive and interesting to demo. This is the starting point of the environment:
 
-\begin{enumarte}
-\item RIGHT_ONLY
-\item SIMPLE_MOVEMENT
-\item COMPLEX_MOVEMENT
-\end{enumaree}
+\begin{figure}[H]
+	\centering
+	
+	\includegraphics[scale=0.5]{fig1.png}
+	\\	
+	\vspace{0.1in}
+	\textbf{Fig.1:} Snapshot out of the emulator
+	\\
+	\label{fig:Fig.1}
+\end{figure}
+
+
+The action space here can be chosen by the user. There is a selection of three movement types, namely:
+
+\begin{enumerate}
+\item RIGHT\_ONLY
+\item SIMPLE\_MOVEMENT
+\item COMPLEX\_MOVEMENT
+\end{enumerate}
 
 The first type of actions is self-explanatory, there are only movements that contain a 'right' movement. The second movement type differs slightly from the first one. It contains a 'left' movement and a straight jump up, 'A'. The last one contains almost possible direction that you can have on an actual joypad, including crouching, standing up, jumping back and more. This is the code for each movement type on their github:
 
 \begin{mintedbox}{python}
-
- actions for the simple run right environment
+ # actions for the simple run right environment
 RIGHT_ONLY = [
     ['NOOP'],
     ['right'],
@@ -283,7 +296,6 @@ RIGHT_ONLY = [
     ['right', 'B'],
     ['right', 'A', 'B'],
 ]
-
 
 # actions for very simple movement
 SIMPLE_MOVEMENT = [
@@ -295,7 +307,6 @@ SIMPLE_MOVEMENT = [
     ['A'],
     ['left'],
 ]
-
 
 # actions for more complex movement
 COMPLEX_MOVEMENT = [
@@ -312,7 +323,7 @@ COMPLEX_MOVEMENT = [
     ['down'],
     ['up'],
 ]
-\end{mindtedbox}
+\end{mintedbox}
 
 'NOOP' stands for no operation, so the agent stands still. 'A' stands for jumping, 'B' stands for sprinting and the direction are ['right','up','left','down']. These movement types are imported through the simple command in any Python file:
 \begin{mintedbox}{python}
@@ -327,45 +338,89 @@ This is how we would setup the most basic environment to train our agent in. As 
 
 
 \subsection*{Additional Wrappers}
+\subsubsection*{Environment 1}
+Now that we have got out basic environment setup, it's time to use some wrappers from stable baselines3 to make our environment more "model-friendly". I have tried two combinations of wrappers. The first combination was:
+
+\begin{mintedbox}{python}
+
+# Import wrappers to improve performace
+# Turn image to grayscale
+from gym.wrappers import GrayScaleObservation
+# Import wrappers for vectorization
+from stable_baselines3.common.vec_env import VecFrameStack, DummyVecEnv
+
+env = gym_super_mario_bros.make('SuperMarioBros-v0')
+# get simple movements
+env = JoypadSpace(env, SIMPLE_MOVEMENT)
+# apply grayscaling, no need to process colored pixels
+# takes at most three times more
+env = GrayScaleObservation(env, keep_dim=True)
+# store environmnet in a dummy environment
+env = DummyVecEnv([lambda: env])
+# stack for frames, can see 4 consecutive frames
+# allows to see into the "future"
+env = VecFrameStack(env, 4, channels_order='last')
+\end{mintedbox}
+
+After initializing our base environment, we then apply GrayScaleObservation for our environment. Since the environment has RGB values in each pixel, this will slow down the training process. We can see the same idea applied to datasets that are used for image recognition such as Dogs vs. Cats Kaggle dataset or MNIST. Then, we then wrap this environment into a dummy environment. This is needed in order to accomplish the third wrapping function. The third wrappe, VecFrameStack, requires the environment to be a vectorized environment, which the DummyVecEnv class creates. Once we have a vectorized environment, we utilize VecFrameStack to stack $n$ frames from the environment on top of each other, so we are looking into the "future" in some sense. This can improve the training since the model doesn't have to take a step to get to the next state; it is already available because we applied VecFrameStack to it.
+
+These methodologies unfortunately didn't deliver the performance that I was hoping for. The main issue was that it couldn't handle large numbers of total timesteps and got stuck. I initially ran the model for 100'000 timesteps just as a simple end-to-end test, checking if everything was working. The model obtained from 100k timesteps was subpar. To improve the model, I decided to train it 1 million timesteps and that was when I came across the major issue. The model got stuck at around 900k timesteps for a long time and couldn't proceed. Based on those findings, I opted out to another solution.
+
+\subsubsection*{Environment 2}
+
+Based on my findings from the last pre-processing methods, I did some more research. I had an intuition that time was a major factor that was causing issues in the last environment. The agent was probably getting stuck at a pipe, which he couldn't jump over just like in Fig.1. The first thing I did was implement a LimitStepsTakenWrapper class using the templates on stable-baselines3:
+
+\begin{mintedbox}{python}
+class LimitStepsTakenWrapper(gym.Wrapper):
+  def __init__(self, env, max_steps=10000):
+    # Constructor
+    super(LimitStepsTakenWrapper, self).__init__(env)
+    self.max_steps = max_steps
+    # Counter for steps taken in episode
+    self.current_step = 0
+  
+  def reset(self):
+    # Reset the counter to zero
+    self.current_step = 0
+	# Reset env    
+    return self.env.reset()
+
+  def step(self, action):
+  	# Take one step, add it to the counter
+    self.current_step += 1
+    observation, reward, done, info = self.env.step(action)
+    # If we reach limit, then we are done 
+    if self.current_step >= self.max_steps:
+      done = True
+      info['time_limit_reached'] = True
+    info['Current_Step'] = self.current_step
+    return observation, reward, done, info
+\end{mintedbox}
+With this, we can limit the agent to a specific amount of steps per episode so that it doesn't get stuck somewhere and progressively makes the model worse. The second wrapper that I included in this environment is the MaxAndSkipEnv wrapper. This wrapper allows us to skip every $n-th$ frame. This approach almost the opposite to the VecFrameStack wrapper that I used in the first environment. Finally, to hopefully increase training performance even more, I utilized the SubprocVecEnv. This allows the environment to be split into $n_cpu$ sub-processes, whereas $n_cpu$ is the amount of cores on your CPU that you are willing to allocate for this task. This is especially useful if the environment is computationally challenging. The end result of the second environment would look like this:
+
+\begin{mintedbox}{python}
+def create_env():
+	env = gym_super_mario_bros.make('SuperMarioBros-v0')
+	env = JoypadSpace(env, SIMPLE_MOVEMENT) 
+	env = LimitStepsTakenWrapper(env, max_steps=2000)
+	env = MaxAndSkipEnv(env, 4)
+	return env      
+	
+n_cpu = 8  # Number of processes/cpu cores to use
+# Create environment
+env = VecMonitor(SubprocVecEnv([create_env(env_id, i) for i in range(n_cpu)]),"tmp/TestMonitor")
+\end{mintedbox}
+
+In this case, we are creating 8 processes that we can "store" 8 sub-environments into. Each of these environments will allow a maximum of 2000 steps per episode and they will skip every 4th frame.
+
+
+\subsection*{Training Policy and Model}
+
+For both environments 1 \& 2, I utilized the Proximal Policy Optimization (PPO) algorithm developed by OpenAI. This model is implemented by stable-baselines3 as a package that can be imported with pip. 
 
 
 
 
-
-
-
-
-\begin{itemize}
-\item the states: 
-\begin{itemize}
-\item the cart's x-coordinate
-\item cart's velocity
-\item the pole's angular velocity
-\item the pole's angle
-\end{itemize}
-\item the environment: the simulation that is simulating cart with the pole that is on a rail
-\item actions:
-\begin{itemize}
-\item move cart to right
-\item move cart to left
-\end{itemize} 
-\item reward:
-\begin{itemize}
-\item reward = 1, when the pole stays within the specified angle (±12°) and cart's x-coordinate is in range of (-2.4, 2.4)
-\item reward = 0, when the above mentioned conditions are not met, then we fail and restart the environment
-\end{itemize} 
-\end{itemize}  
-
-Essentially we want:
-$$
-\pi^*(s) = \argmax_a \ Q^*(s,a)
-$$
-However, we cannot achieve this since we don't know every possible state, action and reward in the world. What we do instead is, we try to approximate the $Q$ function with the help of neural networks. We assume that the $Q$ function is a Bellman equation and can write it like this:
-
-$$
-Q^{\pi}(s,a) = r_0 + \gamma Q^{\pi}(s',\pi(s'))
-$$
-This equation describes that the current $Q$ function is the sum of the current reward $r_0$ and the $Q$ function of the future state $s'$ and action $a' = \pi(s')$ multiplied by a discount rate $\gamma$. This is a very powerful tool since we can describe the $Q$ function recursively.
 
 We can rewrite this equation into what will be inputted into the Huber loss.
 For the Huber loss function, we input what is called the temporal difference error, $\delta$:
