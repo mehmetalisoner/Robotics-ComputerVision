@@ -325,7 +325,7 @@ COMPLEX_MOVEMENT = [
 ]
 \end{mintedbox}
 
-'NOOP' stands for no operation, so the agent stands still. 'A' stands for jumping, 'B' stands for sprinting and the direction are ['right','up','left','down']. These movement types are imported through the simple command in any Python file:
+'NOOP' stands for no operation, so the agent stands still. 'A' stands for jumping, 'B' stands for sprinting and the direction are ['right','up','left','down']. These movement types are imported as the following:
 \begin{mintedbox}{python}
 from nes_py.wrappers import JoypadSpace
 import gym_super_mario_bros
@@ -334,12 +334,12 @@ env = gym_super_mario_bros.make('SuperMarioBros-v0')
 env = JoypadSpace(env, SIMPLE_MOVEMENT)
 \end{mintedbox}
 
-This is how we would setup the most basic environment to train our agent in. As mentioned before, we install the gym-super-mario-bros package with pip, import that specific package, and wrap the movement type of choice with a JoypadSpace wrapper around our environment. This is sufficient enough to train our agent however in order to improve performance or if we want to train our model for large amount of total time steps, we need add some additional wrappers for that. We want good data/environment in order to create a good policy.
+This is how we would setup the most basic environment to train our agent in. As mentioned before, we install the gym-super-mario-bros package with pip, import that specific package, and wrap the movement type of choice with a JoypadSpace wrapper around our environment. This is sufficient enough to train our agent. However, in order to improve performance or if we want to train our model for large amount of total time steps, we need add some additional wrappers for that. We want good data/environment in order to create a good policy.
 
 
 \subsection*{Additional Wrappers}
 \subsubsection*{Environment 1}
-Now that we have got out basic environment setup, it's time to use some wrappers from stable baselines3 to make our environment more "model-friendly". I have tried two combinations of wrappers. The first combination was:
+Now that we have got our basic environment setup, it's time to use some wrappers from stable baselines3 to make our environment more "model-friendly". I have tried two combinations of wrappers. The first combination was:
 
 \begin{mintedbox}{python}
 
@@ -396,19 +396,28 @@ class LimitStepsTaken(gym.Wrapper):
     info['Current_Step'] = self.current_step
     return observation, reward, done, info
 \end{mintedbox}
-With this, we can limit the agent to a specific amount of steps per episode so that it doesn't get stuck somewhere and progressively makes the model worse. The second wrapper that I included in this environment is the MaxAndSkipEnv wrapper. This wrapper allows us to skip every $n-th$ frame. This approach almost the opposite to the VecFrameStack wrapper that I used in the first environment. Finally, to hopefully increase training performance even more, I utilized the SubprocVecEnv. This allows the environment to be split into $n_cpu$ sub-processes, whereas $n_cpu$ is the amount of cores on your CPU that you are willing to allocate for this task. This is especially useful if the environment is computationally challenging. The end result of the second environment would look like this:
+With this, we can limit the agent to a specific amount of steps per episode so that it doesn't get stuck somewhere and progressively makes the model worse. The second wrapper that I included in this environment is the MaxAndSkipEnv wrapper. This wrapper allows us to skip every $n-th$ frame. This approach almost the opposite to the VecFrameStack wrapper that I used in the first environment. Finally, to hopefully increase training performance even more, I utilized the SubprocVecEnv. This allows the environment to be split into $num_{cpu}$ sub-processes, whereas $num_{cpu}$ is the amount of cores on your CPU that you are willing to allocate for this task. This is especially useful if the environment is computationally challenging. The end result of the second environment would look like this:
 
 \begin{mintedbox}{python}
-def create_env():
-	env = gym_super_mario_bros.make('SuperMarioBros-v0')
-	env = JoypadSpace(env, SIMPLE_MOVEMENT) 
-	env = LimitStepsTaken(env, max_steps=2000)
-	env = MaxAndSkipEnv(env, 4)
-	return env      
+def create_env(env_id, rank, seed=0):
+    def _init():
+        env = gym_super_mario_bros.make('SuperMarioBros-v0')
+        env = JoypadSpace(env, SIMPLE_MOVEMENT) 
+        env = LimitsStepsTaken(env, max_steps=2000)
+        env = MaxAndSkipEnv(env, 4)
+        env.seed(seed + rank)
+        return env
+    set_random_seed(seed)
+    return _init 
 	
-n_cpu = 8  # Number of processes/cpu cores to use
-# Create environment
-env = VecMonitor(SubprocVecEnv([create_env(env_id, i) for i in range(n_cpu)]),"tmp/TestMonitor")
+# Create environment and wrapp it accordingly with the create_env() function
+# After create_env(), create num_cpu * environments and put them into num_cpu processes
+
+env_id = "SuperMarioBros-v0"
+num_cpu = 8  # Number of processes/cores to use
+
+# Create the final vectorized environment
+env = VecMonitor(SubprocVecEnv([create_env(env_id, i) for i in range(num_cpu)]),"models/EnvMonitor")
 \end{mintedbox}
 
 In this case, we are creating 8 processes that we can "store" 8 sub-environments into. Each of these environments will allow a maximum of 2000 steps per episode and they will skip every 4th frame.
@@ -439,9 +448,20 @@ The \textbf{discounted rewards} of the rewards over the episode is calculated af
 
 
 \subsubsection*{Objective Function}
-Now, we will now construct our objective function by building upon the introduced concepts from the previous section (advantage, policy gradient loss). The second interesting thing about PPO is the unclipped and clipped region of 
+Now, we will now construct our objective function by building upon the introduced concepts from the previous section (advantage, policy gradient loss). The second interesting thing about PPO is the clipping feature. The main objective function looks something like this:
 
+$$
+L^{CLIP}(\theta) = \hat{E}_t \left[ min \left(r_t(\theta) \hat{A}, \text{clip} \left( r_t(\theta),1-\epsilon, 1+\epsilon \right) \hat{A} \right) \right] 
+$$
 
+I will explain this equation term by term. The first term that needs explaining is $r_t(\theta)$. $r_t(\theta)$ is basically the probability of taking action $a_t$ and state $s_t$ in the current policy over the old police. This will be an easy way to determine which policy to choose from(?). The second term is almost the exact same term but we are setting boundaries on how far the ratio function can go. This will make the model inherently more conservative as it will not step out of bounds to explore new areas, which may be not optimal. If that would be the case without the clipping constraint, we would take the gradient over a worse performing policy and never recover from that. The following figure from huggingface.co shows each possibility of this function pretty well.
+
+Once we have this term, we can define the final objective function of PPO as such:
+
+$$
+L_t^{PPO}(\theta) = \hat{E}_t = \left[L_t^{CLIP}(\theta) - c_1 L_t^{VF}(\theta) + c_2 S[\pi_0](s_t) \right]
+$$ 
+The first term is the equation from before, the second term is the loss of the value function we described in the previous section and the last term is an entropy bonus that allows for some exploration.
 
 
 
