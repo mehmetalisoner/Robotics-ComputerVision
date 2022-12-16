@@ -429,7 +429,7 @@ $$
 L^{PG}(\theta) = \hat{E} \left[log \pi_{\theta}(a_t | s_t) \hat{A}_t \right]
 $$
 
-This is the expectation of the log of the outputs of the policy function $\pi_{\theta}$ multiplied by an estimate of the advantage$\hat{A}$. The advantage function is a function that will calculate how advantageous the action is that the agent took. It is defined simply by:
+This is the expectation of the log of the outputs of the policy function $\pi_{\theta}$ multiplied by an estimate of the advantage $\hat{A}$. The advantage function is a function that will calculate how advantageous the action is that the agent took. It is defined simply by:
 $$
 \hat{A} = \textrm{Discounted sum rewards} - \textrm{Value function} 
 $$
@@ -439,7 +439,7 @@ The \textbf{discounted rewards} of the rewards over the episode is calculated af
 
 
 \subsubsection*{Objective Function}
-
+Now, we will now construct our objective function by building upon the introduced concepts from the previous section (advantage, policy gradient loss). The second interesting thing about PPO is the unclipped and clipped region of 
 
 
 
@@ -469,16 +469,19 @@ The one thing that may be important to point out is the callback, which essentia
 
 
 \section*{Results}
-In this section, I will mainly go over the logs that I have captured on Tensorboard from both environments. First, I will demonstrate why the first environment was not performing as well as I expected. Video demos will be explained and played in the video presentation.
+In this section, I will mainly go over the logs that I have captured on Tensorboard from both environments. First, I will demonstrate why the first environment was not performing as well as I expected. Video demos will be explained and played in the video presentation. I will also explain the Tensorboard logs in interactive mode in the video presentation.
 
 \subsubsection*{Environment 1}
-LR=1e-5
+I have trained few models in this environment but there are mainly two ones that finalized my decision for the change to environment 2. The first initial model that I trained was trained with a learning rate of $1e-6$ with a total timestesps = 100'000. This was just to get a sense of how much training was needed, how the environment looked like and behaved, how the returned rewards per episode and other performance metrics would like. This was the an initial "test run". We can see the mean reward per episode in Fig.2. The upwards trend was promising. However, the loss and policy gradient loss were very "fuzzy". This means that the policy took very good and bad steps one after the other, resulting in these sharp spikes in Fig.3 (orange plot) and Fig.4 (orange plot). I will show these metrics more interactively in the video presentation since I wanted to capture the performance of the 1 million timestep model's performance. Coming back to the 100'000 timestep model, I thought that the learning rate may have been too small and that the agent couldn't go far enough to another good action after taking a good action. Based on this, I increased the total timesteps from 100'000 to 1'000'000. For some reason, I couldn't extract the mean reward per episode plot in this model. This model got stuck at around 960'000 timesteps and didn't terminate. While I was observing the tensorboard for this model, I was thinking of ways to improve this model since this one also didn't perform like I wanted to. However, after the model couldn't terminate, I decided to try out another environment. When I switched to the second environment, I also realized the training time was a lot bigger in the first environment.  
+
+
+
 \begin{figure}[H]
 	\centering
 \includegraphics[width=\linewidth]{reward_env1.png}
 	\\	
 	\vspace{0.1in}
-	\textbf{Fig.x:} Mean reward per episode, \textbf{Environment 1}
+	\textbf{Fig.2:} Mean reward per episode, LR=1e-6, total steps = 100k
 	\\
 	\label{fig:Fig.3}
 \end{figure}
@@ -489,7 +492,7 @@ LR=1e-5
 \includegraphics[width=\linewidth]{loss_env1.png}
 	\\	
 	\vspace{0.1in}
-	\textbf{Fig.x:} Loss reward per episode, \textbf{Environment 1}
+	\textbf{Fig.3:} Policy gradient loss reward per episode, \textbf{Environment 1}
 	\\
 	\label{fig:Fig.3}
 \end{figure}
@@ -498,6 +501,20 @@ LR=1e-5
 
 
 \subsubsection*{Environment 2}
+The second environment responded a lot better from the start. I decided to include more performance plots than the previous one since this was my main environment that I trained most of my models in. The \textbf{learning rate = 0.00003 = 3e-4} was held constant for every model while incrementing the total timesteps for the model. I wanted to include figures that compared every model between each other, rather than performance metrics for each one. I will show the models one by one in the video presentation. For this case however, I wanted to see the general performance of every model at once. First, let me create a legend for Fig.4-6 for the configuration for these models:
+
+\begin{itemize}
+\item Model 1, gray: 100k timesteps
+\item Model 2, fluorescent blue: 500k timesteps
+\item Model 3, light orange: 1 million timesteps
+\item Model 4, dark orange: 1.5 million timesteps
+\item Model 5, fluorescent green: 2 million timesteps
+\item Model 6, matte blue (the one that starts up to in Fig.4): \textbf{Retrained} model 5 with 1 million more timesteps
+\item Model 7, red: 4 million timesteps, fresh model
+
+\end{itemize}
+
+
 
 
 \begin{figure}[H]
@@ -505,31 +522,26 @@ LR=1e-5
 \includegraphics[scale=3,width=\linewidth]{ep_rew_mean_env2.png}
 	\\	
 	\vspace{0.1in}
-	\textbf{Fig.x:} Mean reward per episode, \textbf{Environment 2}
+	\textbf{Fig.4:} Mean reward per episode, \textbf{Environment 2}
 	\\
 	\label{fig:Fig.3}
 \end{figure}
+
+Fig.4 demonstrates the general performance of the model. We can see a clear trend upwards in with increasing timesteps. The model that achieves the best score is model 5, with 2 million timesteps. Model 6 also reaches that score, however model 6 is a retrained version of model 5. I had hoped that this model would keep on improving model 5 but as we can see in Fig.4., it takes a very wrong turn that results in the reward tanking and takes a while to recover. It also didn't quite seem to finish training since there was a memory issue (included in the Jupyter Notebook). The only explanation I think of is the that the model already took up a lot of space and retraining isn't optimal. Another explanation for could be that this environment performs quite well in the range of 500k-2million timesteps. The mean reward per episode in this interval is similar across every model that I have trained. Perhaps, this environment isn't optimal for handling models that are going to train for $> 2.5 * 10^6$ timesteps. I wanted hoped that this assumption that I had was wrong but the last model that I trained, model 7, couldn't recover from a bad step even after 2 additional timesteps. One last thing I want to point out is the that there is an increase of at least 500 in the score every 500k timesteps. This can be seen in the models 1-5. There are even some bigger jumps that happen, e.g model 5. There is a huge jump in reward from timestep 1 million to timestep 1.5 million. While actually testing the models, I had the best luck with model 4 and model 5. No surprise there since these showed the most consistent performance. They completed the level several times during my test run. I will demonstrate the video in the presentation. 
+
 
 \begin{figure}[H]
 	\centering
 \includegraphics[scale=3,width=\linewidth]{policy_loss_env2.png}
 	\\	
 	\vspace{0.1in}
-	\textbf{Fig.x:} Policy Loss, \textbf{Environment 2}
+	\textbf{Fig.5:} Policy gradient loss per episode, \textbf{Environment 2}
 	\\
 	\label{fig:Fig.3}
 \end{figure}
 
+In Fig.5, we can see the policy gradient loss of each model. As described in the Methods section, the policy gradient loss can be positive or negative, depending on the estimated advantage. We can see this clearly through the ups and downs in each model. In comparison to the first environment, the loss is less fuzzy. The agent keeps taking good, consecutive actions. This doesn't mean that it will always keep making them. However, the general trend of the losses for models 1-5 is upwards, hinting at a better policy. What is interesting is that with model 7 (red), the general trend for the performance in Fig.4 flatlines after 2 million timesteps, just like in Fig.5. Even though there are peaks, the loss doesn't progressively go up. 
 
-\begin{figure}[H]
-	\centering
-\includegraphics[scale=3,width=\linewidth]{loss_env2.png}
-	\\	
-	\vspace{0.1in}
-	\textbf{Fig.x:} Loss, \textbf{Environment 2}
-	\\
-	\label{fig:Fig.3}
-\end{figure}
 
 
 
@@ -538,18 +550,18 @@ LR=1e-5
 \includegraphics[scale=3,width=\linewidth]{dqn_vs_ppo_env2.png}
 	\\	
 	\vspace{0.1in}
-	\textbf{Fig.x:} DQN (orange) vs. PPOs (rest), \textbf{Environment 2}
+	\textbf{Fig.7:} DQN (orange) vs. PPOs (rest), \textbf{Environment 2}
 	\\
 	\label{fig:Fig.3}
 \end{figure}
 
-
+After training model 7 with 4 million timesteps (shown in Fig.4 and Fig.5 as bright red, shown as bright purple in Fig.7), I wanted to check if I PPO was the right solution for this problem. So, I decided to test a DQN as well in this environment. Just like PPO, DQN can be imported from the stable-baselines3 package with ease. The DQN model underperformed every PPO model as we can see in Fig.7. In the first 500-700k timesteps, it is holding up fairly with the PPO models but than cannot push further after 800k. This may be due to the replay buffer that the DQN has to constantly check for. The utilization of the replay buffer/memory holds up a decent chunk in the memory, which in the end could affect the maximum timestep that we can train the model before we hit a plateau, just like the plateau with PPOs at around 2.5 million timesteps. The claim of OpenAi was right in this scenario.
 
 
 
 
 \section*{Conclusion}
-
+In this final project, I have learned how to configure an optimal environment, observe performance metrics and obtain a model that can beat the first level of Super Mario Bros. I have majorly underestimated the significance of fine tuning and environment optimization after completing the CartPole problem since that environment is significantly simpler than this one. I thought that I could train an agent with minimal timesteps and no pre-processing of the environment. Even though this level is simple, the agent still requires a lot of training in order to complete it. I will personally look further into this project in my own free time and extend the training to the whole game so that Mario can beat it in one single run.  
 
 
 
